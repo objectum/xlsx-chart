@@ -59,7 +59,7 @@ xlsxChart.generate (opts, function (err, data) {
 	res.set ({
 	  "Content-Type": "application/vnd.ms-excel",
 	  "Content-Disposition": "attachment; filename=chart.xlsx",
-	  "Content-Length", data.length
+	  "Content-Length": data.length
 	});
 	res.status (200).send (data);
 });
