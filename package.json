@@ -1,0 +1,33 @@
+{
+  "name": "xlsx-chart",
+  "version": "0.1.0",
+  "description": "MS Excel Charts",
+  "main": "chart.js",
+  "dependencies": {
+    "async": "^1.4.2",
+    "backbone": "^1.2.3",
+    "jszip": "^2.5.0",
+    "underscore": "^1.8.3",
+    "verror": "^1.6.0",
+    "xml2js": "^0.4.13"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/objectum/xlsx-chart.git"
+  },
+  "keywords": [
+    "excel",
+    "xlsx",
+    "chart"
+  ],
+  "author": "Dmitriy Samortsev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/objectum/xlsx-chart/issues"
+  },
+  "homepage": "https://github.com/objectum/xlsx-chart#readme"
+}
