@@ -73,7 +73,7 @@ column, bar, line, area, radar, scatter, pie
 
 ## Author
 
-**Dmitry Samortsev**
+**Dmitriy Samortsev**
 
 + http://github.com/objectum
 
