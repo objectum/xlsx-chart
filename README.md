@@ -14,7 +14,6 @@ var xlsxChart = require ("xlsx-chart");
 var xlsxChart = new XLSXChart ();
 var opts = {
 	file: "chart.xlsx",
-	type: "base64",
 	chart: "column",
 	titles: [
 		"Title 1",
