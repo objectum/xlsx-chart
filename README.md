@@ -67,6 +67,10 @@ xlsxChart.generate (opts, function (err, data) {
 
 ```
 
+## Chart types
+
+column, bar, line, area, radar, scatter, pie
+
 ## Author
 
 **Dmitry Samortsev**
