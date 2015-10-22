@@ -10,7 +10,7 @@ npm install xlsx-chart
 
 Generate and write chart to file
 ```js
-var xlsxChart = require ("xlsx-chart");
+var XLSXChart = require ("xlsx-chart");
 var xlsxChart = new XLSXChart ();
 var opts = {
 	file: "chart.xlsx",
