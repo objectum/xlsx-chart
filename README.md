@@ -67,7 +67,7 @@ xlsxChart.generate (opts, function (err, data) {
 
 ```
 
-## Authors
+## Author
 
 **Dmitry Samortsev**
 
