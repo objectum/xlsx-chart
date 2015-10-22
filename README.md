@@ -70,6 +70,8 @@ xlsxChart.generate (opts, function (err, data) {
 
 column, bar, line, area, radar, scatter, pie
 
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/xlsx-chart.png)
+
 ## Author
 
 **Dmitriy Samortsev**
