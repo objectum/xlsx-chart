@@ -72,6 +72,7 @@ column, bar, line, area, radar, scatter, pie
 
 ## Examples
 
+<a href="https://github.com/objectum/xlsx-chart/master/examples/column.js">column.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/column.png)  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/bar.png)  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/line.png)  
