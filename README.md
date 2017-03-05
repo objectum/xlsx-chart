@@ -70,6 +70,10 @@ xlsxChart.generate (opts, function (err, data) {
 
 column, bar, line, area, radar, scatter, pie
 
+## Mixing
+
+You can mix column, bar, line, area.
+
 ## Examples
 
 <a href="examples/column.js">column.js</a>  
