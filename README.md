@@ -70,7 +70,17 @@ xlsxChart.generate (opts, function (err, data) {
 
 column, bar, line, area, radar, scatter, pie
 
-![alt tag](https://raw.github.com/objectum/xlsx-chart/master/xlsx-chart.png)
+## Examples
+
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/column.png)  
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/bar.png)  
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/line.png)  
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/area.png)  
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/radar.png)  
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/scatter.png)  
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/pie.png)  
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/columnLine.png)  
+![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/mix.png)  
 
 ## Author
 

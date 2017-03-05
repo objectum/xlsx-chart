@@ -243,6 +243,16 @@ var Chart = BaseChart.extend ({
 				}
 			}];
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
+			if (me.chartTitle) {
+				me.writeTitle (o, me.chartTitle);
+			};
+			if (me.showVal) {
+				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:dLbls"]["c:showVal"] = {
+					$: {
+						val: "1"
+					}
+				};
+			};
 			me.write ({file: "xl/charts/chart1.xml", object: o});
 			cb ();
 		});

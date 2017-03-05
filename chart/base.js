@@ -38,7 +38,7 @@ var Chart = Backbone.Model.extend ({
 		if (n < 26) {
 			return abc [n];
 		} else {
-			return abc [n / 26 | 0] + abc [n % 26];
+			return abc [(n / 26 - 1) | 0] + abc [n % 26];
 		}
 	},
 	/*
@@ -134,16 +134,70 @@ var Chart = Backbone.Model.extend ({
 		});
 	},
 	/*
+		Remove unused charts
+	*/
+	removeUnusedCharts: function (o) {
+		var me = this;
+		if (me.tplName != "charts") {
+			return;
+		};
+		var axId = [];
+		function addId (o) {
+			_.each (o ["c:axId"], function (o) {
+				axId.push (o.$.val);
+			});
+		};
+		_.each (["line", "radar", "area", "scatter", "pie"], function (chart) {
+			if (!me.charts [chart]) {
+				delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"];
+			} else {
+				addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]);
+			};
+		});
+		if (!me.charts ["column"] && !me.charts ["bar"]) {
+			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
+		} else
+		if (me.charts ["column"] && !me.charts ["bar"]) {
+			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0];
+			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
+		} else
+		if (!me.charts ["column"] && me.charts ["bar"]) {
+			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1];
+			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
+		} else {
+			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]);
+			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1]);
+		};
+
+		var catAx = [];
+		_.each (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"], function (o) {
+			if (axId.indexOf (o ["c:axId"].$.val) > -1) {
+				catAx.push (o);
+			};
+		});
+		o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"] = catAx;
+
+		var valAx = [];
+		_.each (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"], function (o) {
+			if (axId.indexOf (o ["c:axId"].$.val) > -1) {
+				valAx.push (o);
+			};
+		});
+		o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"] = valAx;
+	},
+	/*
 		Write chart
 	*/
 	writeChart: function (cb) {
 		var me = this;
+		var chart;
 		me.read ({file: "xl/charts/chart1.xml"}, function (err, o) {
 			if (err) {
 				return cb (new VError (err, "writeChart"));
 			}
-			var ser = [];
+			var ser = {};
 			_.each (me.titles, function (t, i) {
+				var chart = me.data [t].chart || me.chart;
 				var r = {
 					"c:idx": {
 						$: {
@@ -215,7 +269,7 @@ var Chart = Backbone.Model.extend ({
 						}
 					}
 				};
-				if (me.chart == "scatter") {
+				if (chart == "scatter") {
 					r ["c:xVal"] = r ["c:cat"];
 					delete r ["c:cat"];
 					r ["c:yVal"] = r ["c:val"];
@@ -228,14 +282,121 @@ var Chart = Backbone.Model.extend ({
 							"a:noFill": ""
 						}
 					};
-				}
-				ser.push (r);
+				};
+				ser [chart] = ser [chart] || [];
+				ser [chart].push (r);
 			});
-			var tag = me.chart == "column" ? "bar" : me.chart;
-			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + tag + "Chart"]["c:ser"] = ser;
+/*
+			var tag = chart == "column" ? "bar" : chart;
+			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]["c:ser"] = ser;
+*/
+			_.each (ser, function (ser, chart) {
+				if (chart == "column") {
+					if (me.tplName == "charts") {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]["c:ser"] = ser;
+					} else {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
+					};
+				} else
+				if (chart == "bar") {
+					if (me.tplName == "charts") {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1]["c:ser"] = ser;
+					} else {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
+					};
+				} else {
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:ser"] = ser;
+				};
+			});
+			me.removeUnusedCharts (o);
+/*
+			if (me.showVal) {
+				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + tag + "Chart"]["c:dLbls"]["c:showVal"] = {
+					$: {
+						val: "1"
+					}
+				};
+			};
+*/
+			if (me.chartTitle) {
+				me.writeTitle (o, me.chartTitle);
+			};
+/*
+			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0];
+			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"][0];
+			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"][0];
+			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"];
+			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:areaChart"];
+*/
 			me.write ({file: "xl/charts/chart1.xml", object: o});
 			cb ();
 		});
+	},
+	/*
+		Chart title
+	*/
+	writeTitle: function (chart, title) {
+		var me = this;
+		chart ["c:chartSpace"]["c:chart"]["c:title"] = {
+			"c:tx": {
+				"c:rich": {
+					"a:bodyPr": {},
+					"a:lstStyle": {},
+					"a:p": {
+						"a:pPr": {
+							"a:defRPr": {}
+						},
+						"a:r": {
+							"a:rPr": {
+								$: {
+									lang: "ru-RU"
+								}
+							},
+							"a:t": title
+						}
+					}
+				}
+			},
+			"c:layout": {},
+			"c:overlay": {
+				$: {
+					val: "0"
+				}
+			}
+		};
+		chart ["c:chartSpace"]["c:chart"]["c:autoTitleDeleted"] = {
+			$: {
+				val: "0"
+			}
+		};
+	},
+	/*
+		Set template name
+	*/
+	setTemplateName: function () {
+		var me = this;
+		var charts = {};
+		_.each (me.data, function (o) {
+			charts [o.chart || me.chart] = true;
+		});
+		me.charts = charts;
+		if (charts ["radar"]) {
+			me.tplName = "radar";
+			return;
+		};
+		if (charts ["scatter"]) {
+			me.tplName = "scatter";
+			return;
+		};
+		if (charts ["pie"]) {
+			me.tplName = "pie";
+			return;
+		};
+		if (_.keys (charts).length == 1) {
+			me.tplName = _.keys (charts) [0];
+			return;
+		};
+		me.tplName = "charts";
 	},
 	/*
 		Generate XLSX with chart
@@ -251,10 +412,11 @@ var Chart = Backbone.Model.extend ({
 		async.series ([
 			function (cb) {
 				me.zip = new JSZip ();
-				fs.readFile (__dirname + "/../template/" + me.chart + ".xlsx", function (err, data) {
+				me.setTemplateName ();
+				fs.readFile (__dirname + "/../template/" + me.tplName + ".xlsx", function (err, data) {
 					if (err) {
 						return cb (err);
-					}
+					};
 					me.zip.load (data);
 					cb ();
 				});

@@ -267,6 +267,16 @@ var Chart = BaseChart.extend ({
 				}
 			}];
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
+			if (me.chartTitle) {
+				me.writeTitle (o, me.chartTitle);
+			};
+			if (me.showVal) {
+				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:dLbls"]["c:showVal"] = {
+					$: {
+						val: "1"
+					}
+				};
+			};
 			me.write ({file: "xl/charts/chart1.xml", object: o});
 			cb ();
 		});
@@ -389,6 +399,101 @@ var Chart = BaseChart.extend ({
 					}
 				}
 			}];
+			if (me.showValAvg) {
+				var l = {
+					"c:dLbl": [],
+					"c:spPr": {
+						"a:noFill": {},
+						"a:ln": {
+							"a:noFill": {}
+						},
+						"a:effectLst": {}
+					},
+					"c:dLblPos": {
+						$: {
+							val: "r"
+						}
+					},
+					"c:showLegendKey": {
+						$: {
+							val: "0"
+						}
+					},
+					"c:showVal": {
+						$: {
+							val: "1"
+						}
+					},
+					"c:showCatName": {
+						$: {
+							val: "0"
+						}
+					},
+					"c:showSerName": {
+						$: {
+							val: "0"
+						}
+					},
+					"c:showPercent": {
+						$: {
+							val: "0"
+						}
+					},
+					"c:showBubbleSize": {
+						$: {
+							val: "0"
+						}
+					},
+					"c:showLeaderLines": {
+						$: {
+							val: "0"
+						}
+					},
+					"c:extLst": {
+						"c:ext": {
+							$: {
+								"xmlns:c15": "http://schemas.microsoft.com/office/drawing/2012/chart",
+								"uri": "{CE6537A1-D6FC-4f65-9D91-7224C49458BB}"
+							},
+							"c15:layout": {},
+							"c15:showLeaderLines": {
+								$: {
+									val: "1"
+								}
+							}
+						}
+					}
+				};
+				for (var i = 0; i < me.fields.length - 1; i ++) {
+					l ["c:dLbl"].push ({
+						"c:idx": {
+							$: {
+								val: String (i)
+							}
+						},
+						"c:delete": {
+							$: {
+								val: "1"
+							}
+						},
+						"c:extLst": {
+							"c:ext": {
+								$: {
+									"xmlns:c15": "http://schemas.microsoft.com/office/drawing/2012/chart",
+									"uri": "{CE6537A1-D6FC-4f65-9D91-7224C49458BB}"
+								},
+								"c15:layout": {}
+							}
+						}
+					});
+				};
+				ser [0]["c:dLbls"] = l;
+				ser [0]["c:smooth"] = {
+					$: {
+						val: "1"
+					}
+				};
+			};
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:ser"] = ser;
 			me.write ({file: "xl/charts/chart1.xml", object: o});
 			cb ();

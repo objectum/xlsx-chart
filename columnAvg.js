@@ -17,7 +17,9 @@ var opts = {
 		"Field 4": 20 
 	},
 	avg: 12,
-	avgTitle: "Среднее"
+	avgTitle: "Среднее",
+	showVal: true,
+	showValAvg: true
 };
 xlsxChart.generate (opts, function (err, data) {
 	console.log (err);
