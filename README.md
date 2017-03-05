@@ -74,13 +74,21 @@ column, bar, line, area, radar, scatter, pie
 
 <a href="examples/column.js">column.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/column.png)  
+<a href="examples/bar.js">bar.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/bar.png)  
+<a href="examples/line.js">line.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/line.png)  
+<a href="examples/area.js">area.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/area.png)  
+<a href="examples/radar.js">radar.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/radar.png)  
+<a href="examples/scatter.js">scatter.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/scatter.png)  
+<a href="examples/pie.js">pie.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/pie.png)  
+<a href="examples/columnLine.js">columnLine.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/columnLine.png)  
+<a href="examples/mix.js">mix.js</a>  
 ![alt tag](https://raw.github.com/objectum/xlsx-chart/master/examples/mix.png)  
 
 ## Author
