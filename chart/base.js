@@ -413,8 +413,10 @@ var Chart = Backbone.Model.extend ({
 			function (cb) {
 				me.zip = new JSZip ();
 				me.setTemplateName ();
-				fs.readFile (__dirname + "/../template/" + me.tplName + ".xlsx", function (err, data) {
+				let path = me.templatePath ? me.templatePath : (__dirname + "/../template/" + me.tplName + ".xlsx");
+				fs.readFile(path, function (err, data) {
 					if (err) {
+						console.error(`Template ${path} not read: ${err}`);
 						return cb (err);
 					};
 					me.zip.load (data);
