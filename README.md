@@ -74,6 +74,22 @@ column, bar, line, area, radar, scatter, pie
 
 You can mix column, bar, line, area.
 
+## Custom template
+
+Default templates: xlsx-chart/template/*.xlsx
+```js
+var opts = {
+	file: "chart.xlsx",
+	chart: "column",
+	templatePath: __dirname + "myColumn.xlsx",
+	...
+};
+xlsxChart.writeFile (opts, function (err) {
+  console.log ("File: ", opts.file);
+});
+
+```
+
 ## Examples
 
 <a href="examples/column.js">column.js</a>  
