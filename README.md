@@ -81,7 +81,7 @@ Default templates: xlsx-chart/template/*.xlsx
 var opts = {
 	file: "chart.xlsx",
 	chart: "column",
-	templatePath: __dirname + "myColumn.xlsx",
+	templatePath: __dirname + "/myColumn.xlsx",
 	...
 };
 xlsxChart.writeFile (opts, function (err) {
