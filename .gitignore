@@ -1,0 +1,9 @@
+/.idea
+/node_modules
+/tmp
+/npm-debug.log*
+/*.sh
+/*.xlsx
+/column*.js
+/index.js
+/examples/*.xlsx
