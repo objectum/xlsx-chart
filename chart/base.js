@@ -5,6 +5,7 @@ var xml2js = require ("xml2js");
 var VError = require ("verror");
 var fs = require ("fs");
 var async = require ("async");
+//const util = require('util')
 var Chart = Backbone.Model.extend ({
 	/*
 		Read XML file from xlsx as object
@@ -154,14 +155,14 @@ var Chart = Backbone.Model.extend ({
 				addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]);
 			};
 		});
-		if (!me.charts ["column"] && !me.charts ["bar"]) {
+		if (!me.charts ["column"] && !me.charts ["bar"] && !me.charts ["stack-bar"] && !me.charts ["percentage_stack-bar"] && !me.charts ["horizontal_stack-bar"] && !me.charts ["horizontal_percentage_stack-bar"]) {
 			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
 		} else
-		if (me.charts ["column"] && !me.charts ["bar"]) {
+		if (me.charts ["column"] || me.charts ["stack-bar"] || me.charts ["percentage_stack-bar"] && !me.charts ["bar"] && !me.charts ["horizontal_stack-bar"] && !me.charts ["horizontal_percentage_stack-bar"]) {
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0];
 			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
 		} else
-		if (!me.charts ["column"] && me.charts ["bar"]) {
+		if (me.charts ["bar"] || me.charts ["horizontal_stack-bar"] || me.charts ["horizontal_percentage_stack-bar"] &&  !me.charts ["column"]  ) {
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1];
 			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
 		} else {
@@ -197,6 +198,7 @@ var Chart = Backbone.Model.extend ({
 			}
 			var ser = {};
 			_.each (me.titles, function (t, i) {
+				//console.log(me.titles);
 				var chart = me.data [t].chart || me.chart;
 				var r = {
 					"c:idx": {
@@ -284,21 +286,25 @@ var Chart = Backbone.Model.extend ({
 					};
 				};
 				ser [chart] = ser [chart] || [];
+				//console.log(ser[chart]);
 				ser [chart].push (r);
+				//console.log(util.inspect(ser, false, null, true /* enable colors */))
 			});
 /*
 			var tag = chart == "column" ? "bar" : chart;
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]["c:ser"] = ser;
 */
 			_.each (ser, function (ser, chart) {
-				if (chart == "column") {
+				if (chart == "column" || chart == "stack-bar" || chart == "percentage_stack-bar") {
+					console.log('yes')
 					if (me.tplName == "charts") {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]["c:ser"] = ser;
 					} else {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
 					};
 				} else
-				if (chart == "bar") {
+				if (chart == "bar" || chart == "horizontal_stack-bar" || chart == "horizontal_percentage_stack-bar") {
+					console.log('no');
 					if (me.tplName == "charts") {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1]["c:ser"] = ser;
 					} else {
@@ -430,7 +436,7 @@ var Chart = Backbone.Model.extend ({
 				_.each (me.titles, function (t) {
 					me.data [t] = me.data [t] || {};
 					_.each (me.fields, function (f) {
-						me.data [t][f] = me.data [t][f] || (me.deleteEmptyCells ? '' : 0); //deleteEmptyCells - don't display missing values as 0
+						me.data [t][f] = me.data [t][f] || 0;
 					});
 				});
 				me.writeTable (cb);
