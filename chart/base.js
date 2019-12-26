@@ -148,7 +148,7 @@ var Chart = Backbone.Model.extend ({
 				axId.push (o.$.val);
 			});
 		};
-		_.each (["line", "radar", "area", "scatter", "pie"], function (chart) {
+		_.each (["line" , "radar" , "area" , "scatter" , "pie"], function (chart) {
 			if (!me.charts [chart]) {
 				delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"];
 			} else {
@@ -296,7 +296,6 @@ var Chart = Backbone.Model.extend ({
 */
 			_.each (ser, function (ser, chart) {
 				if (chart == "column" || chart == "stack-bar" || chart == "percentage_stack-bar") {
-					console.log('yes')
 					if (me.tplName == "charts") {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]["c:ser"] = ser;
 					} else {
@@ -304,7 +303,6 @@ var Chart = Backbone.Model.extend ({
 					};
 				} else
 				if (chart == "bar" || chart == "horizontal_stack-bar" || chart == "horizontal_percentage_stack-bar") {
-					console.log('no');
 					if (me.tplName == "charts") {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1]["c:ser"] = ser;
 					} else {
