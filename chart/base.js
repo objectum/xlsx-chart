@@ -396,6 +396,10 @@ var Chart = Backbone.Model.extend ({
 			me.tplName = "pie";
 			return;
 		};
+		if (me.chart ==  "combo") {
+			me.tplName = "combo";
+			return;
+		};
 		if (_.keys (charts).length == 1) {
 			me.tplName = _.keys (charts) [0];
 			return;
