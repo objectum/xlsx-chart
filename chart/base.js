@@ -57,6 +57,7 @@ var Chart = Backbone.Model.extend ({
 	*/
 	writeTable: function (cb) {
 		var me = this;
+		var chartName = me.chart
 		me.read ({file: "xl/worksheets/sheet2.xml"}, function (err, o) {
 			if (err) {
 				return cb (new VError (err, "writeTable"));
@@ -84,6 +85,15 @@ var Chart = Backbone.Model.extend ({
 						spans: "1:" + (me.titles.length + 1)
 					}
 				};
+				if(chartName == "scatter"){
+					var c = [{
+						$: {
+							r: "A" + (y + 2),
+							t: "n"
+						},
+						v: f
+					}];
+				}else{
 				var c = [{
 					$: {
 						r: "A" + (y + 2),
@@ -91,6 +101,7 @@ var Chart = Backbone.Model.extend ({
 					},
 					v: me.getStr (f)
 				}];
+				};
 				_.each (me.titles, function (t, x) {
 					c.push ({
 						$: {
