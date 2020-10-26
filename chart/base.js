@@ -495,7 +495,7 @@ var Chart = Backbone.Model.extend ({
 				_.each (me.titles, function (t) {
 					me.data [t] = me.data [t] || {};
 					_.each (me.fields, function (f) {
-						me.data [t][f] = me.data [t][f] || 0;
+						me.data [t][f] = me.data [t][f] || (me.deleteEmptyCells ? '' : 0); //deleteEmptyCells - don't display missing values as 0
 					});
 				});
 				me.writeTable (cb);
