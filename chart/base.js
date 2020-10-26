@@ -107,17 +107,81 @@ var Chart = Backbone.Model.extend ({
 		});
 	},
 	/*
+		Write mult table
+	*/
+	writeMultTable: function (row, cb) {
+		let me = this;
+		
+		me.read ({file: "xl/worksheets/sheet2.xml"}, function (err, o) {
+			if (err) {
+				return cb (new VError (err, "writeMultTable"));
+			}
+			o.worksheet.dimension.$.ref = `A${row}:${me.getColName (me.titles.length + 1)}${me.fields.length + row}`;
+			
+			let rows = [{
+				$: {
+					r: row,
+					spans: "1:" + (me.titles.length + 1)
+				},
+				c: _.map (me.titles, function (t, x) {
+					return {
+						$: {
+							r: `${me.getColName (x + 2)}${row}`,
+							t: "s"
+						},
+						v: me.getStr (t)
+					}
+				})
+			}];
+			_.each (me.fields, function (f, y) {
+				let r = {
+					$: {
+						r: y + 1 + row,
+						spans: "1:" + (me.titles.length + 1)
+					}
+				};
+				let c = [{
+					$: {
+						r: "A" + (y + 1 + row),
+						t: "s"
+					},
+					v: me.getStr (f)
+				}];
+				_.each (me.titles, function (t, x) {
+					c.push ({
+						$: {
+							r: me.getColName (x + 2) + (y + 1 + row)
+						},
+						v: me.data [t][f]
+					});
+				});
+				r.c = c;
+				rows.push (r);
+			});
+			if (row == 1) {
+				o.worksheet.sheetData.row = rows;
+			} else {
+				o.worksheet.sheetData.row = [...o.worksheet.sheetData.row, ...rows];
+			}
+			me.write ({file: "xl/worksheets/sheet2.xml", object: o});
+			cb ();
+		});
+	},
+	/*
 		Write strings
 	*/
 	writeStrings: function (cb) {
-		var me = this;
+		let me = this;
+		
 		me.read ({file: "xl/sharedStrings.xml"}, function (err, o) {
 			if (err) {
 				return cb (new VError (err, "writeStrings"));
 			}
 			o.sst.$.count = me.titles.length + me.fields.length;
 			o.sst.$.uniqueCount = o.sst.$.count;
-			var si = [];
+			
+			let si = [];
+			
 			_.each (me.titles, function (t) {
 				si.push ({t: t});
 			});
@@ -125,6 +189,7 @@ var Chart = Backbone.Model.extend ({
 				si.push ({t: t});
 			});
 			me.str = {};
+			
 			_.each (si, function (o, i) {
 				me.str [o.t] = i;
 			});
@@ -188,9 +253,9 @@ var Chart = Backbone.Model.extend ({
 	/*
 		Write chart
 	*/
-	writeChart: function (cb) {
+	writeChart: function (chartN, cb) {
 		var me = this;
-		var chart;
+
 		me.read ({file: "xl/charts/chart1.xml"}, function (err, o) {
 			if (err) {
 				return cb (new VError (err, "writeChart"));
@@ -328,7 +393,7 @@ var Chart = Backbone.Model.extend ({
 			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"];
 			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:areaChart"];
 */
-			me.write ({file: "xl/charts/chart1.xml", object: o});
+			me.write ({file: `xl/charts/chart${chartN}.xml`, object: o});
 			cb ();
 		});
 	},
@@ -436,13 +501,197 @@ var Chart = Backbone.Model.extend ({
 				me.writeTable (cb);
 			},
 			function (cb) {
-				me.writeChart (cb);
+				me.writeChart (1, cb);
 			}
 		], function (err) {
 			if (err) {
 				return cb (new VError (err, "build"));
 			}
 			var result = me.zip.generate ({type: me.type});
+			cb (null, result);
+		});
+	},
+	generateMult: function (opts, cb) {
+		let me = this;
+		
+		opts.type = opts.type || "nodebuffer";
+		_.extend (me, opts);
+		
+		async.series ([
+			function (cb) {
+				me.zip = new JSZip ();
+				
+				let path = me.templatePath || (__dirname + "/../template/mult.xlsx");
+				
+				fs.readFile (path, function (err, data) {
+					if (err) {
+						console.error(`Template ${path} not read: ${err}`);
+						return cb (err);
+					}
+					me.zip.load (data);
+					cb ();
+				});
+			},
+			function (cb) {
+				me.titles = [];
+				me.fields = [];
+				
+				me.charts.forEach (chart => {
+					me.titles = [...me.titles, ...chart.titles];
+					me.fields = [...me.fields, ...chart.fields];
+				});
+				me.writeStrings (cb);
+			},
+			function (cb) {
+				let row = 1;
+				
+				async.eachSeries (me.charts, (chart, cb) => {
+					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me [a] = chart [a]);
+					
+					_.each (me.titles, function (t) {
+						me.data [t] = me.data [t] || {};
+						
+						_.each (me.fields, function (f) {
+							me.data [t][f] = me.data [t][f] || 0;
+						});
+					});
+					me.writeMultTable (row, () => {
+						row += 2 + me.fields.length;
+						cb ();
+					});
+				}, cb)
+			},
+			function (cb) {
+				let n = 0;
+				
+				async.eachSeries (me.charts, (chart, cb) => {
+					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me [a] = chart [a]);
+					
+					async.series ([
+						function (cb) {
+							me.writeChart (++ n, cb);
+						},
+						function (cb) {
+							if (n == 1) {
+								return cb ();
+							}
+							me.read ({file: "[Content_Types].xml"}, function (err, o) {
+								if (err) {
+									return cb (new VError (err, "generateMult"));
+								}
+								o ["Types"]["Override"].push ({
+									"$": {
+										"ContentType": "application/vnd.openxmlformats-officedocument.drawingml.chart+xml",
+										"PartName": `/xl/charts/chart${n}.xml`
+									}
+								});
+								me.write ({file: `[Content_Types].xml`, object: o});
+								cb ();
+							});
+						},
+						function (cb) {
+							if (n == 1) {
+								return cb ();
+							}
+							me.read ({file: "xl/drawings/_rels/drawing1.xml.rels"}, function (err, o) {
+								if (err) {
+									return cb (new VError (err, "generateMult"));
+								}
+								if (n == 2) {
+									o ["Relationships"]["Relationship"] = [o ["Relationships"]["Relationship"]];
+								}
+								o ["Relationships"]["Relationship"].push ({
+									"$": {
+										"Id": `rId${n}`,
+										"Target": `../charts/chart${n}.xml`,
+										"Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart"
+									}
+								});
+								me.write ({file: `xl/drawings/_rels/drawing1.xml.rels`, object: o});
+								cb ();
+							});
+						},
+						function (cb) {
+							if (n == 1) {
+								return cb ();
+							}
+							me.read ({file: "xl/drawings/drawing1.xml"}, function (err, o) {
+								if (err) {
+									return cb (new VError (err, "generateMult"));
+								}
+								if (n == 2) {
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"] = [o ["xdr:wsDr"]["xdr:twoCellAnchor"]];
+								}
+								o ["xdr:wsDr"]["xdr:twoCellAnchor"].push ({
+									"xdr:from": {
+										"xdr:col": 0,
+										"xdr:colOff": 0,
+										"xdr:row": (n - 1) * 20,
+										"xdr:rowOff": 0
+									},
+									"xdr:to": {
+										"xdr:col": 10,
+										"xdr:colOff": 0,
+										"xdr:row": n * 20,
+										"xdr:rowOff": 0
+									},
+									"xdr:graphicFrame": {
+										"$": {
+											"macro": ""
+										},
+										"xdr:nvGraphicFramePr": {
+											"xdr:cNvPr": {
+												"$": {
+													"id": `${n + 1}`,
+													"name": `Диаграмма ${n}`
+												}
+											},
+											"xdr:cNvGraphicFramePr": {}
+										},
+										"xdr:xfrm": {
+											"a:off": {
+												"$": {
+													"x": "0",
+													"y": "0"
+												}
+											},
+											"a:ext": {
+												"$": {
+													"cx": "0",
+													"cy": "0"
+												}
+											}
+										},
+										"a:graphic": {
+											"a:graphicData": {
+												"$": {
+													"uri": "http://schemas.openxmlformats.org/drawingml/2006/chart"
+												},
+												"c:chart": {
+													"$": {
+														"r:id": `rId${n}`,
+														"xmlns:c": "http://schemas.openxmlformats.org/drawingml/2006/chart",
+														"xmlns:r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+													}
+												}
+											}
+										}
+									},
+									"xdr:clientData": {}
+								});
+								me.write ({file: `xl/drawings/drawing1.xml`, object: o});
+								cb ();
+							});
+						}
+					], cb);
+				}, cb);
+			}
+		], function (err) {
+			if (err) {
+				return cb (new VError (err, "build"));
+			}
+			let result = me.zip.generate ({type: me.type});
+			
 			cb (null, result);
 		});
 	}

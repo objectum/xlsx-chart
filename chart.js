@@ -11,19 +11,24 @@ var XLSXChart = Backbone.Model.extend ({
 		data: {title: {field: value, ...}, ...}
 	*/
 	generate: function (opts, cb) {
-		var me = this;
-		var Chart = require ("./chart/base");
+		let Chart = require ("./chart/base");
+		
 		if (opts.chart == "columnAvg") {
 			Chart = require ("./chart/columnAvg");
-		};
+		}
 		if (opts.chart == "columnGroup") {
 			Chart = require ("./chart/columnGroup");
-		};
+		}
 		if (opts.chart == "columnGroupAvg") {
 			Chart = require ("./chart/columnGroupAvg");
-		};
-		var chart = new Chart ();
-		chart.generate (opts, cb);
+		}
+		let chart = new Chart ();
+		
+		if (opts.charts) {
+			chart.generateMult (opts, cb);
+		} else {
+			chart.generate (opts, cb);
+		}
 	},
 	writeFile: function (opts, cb) {
 		var me = this;

@@ -1,6 +1,6 @@
 {
   "name": "xlsx-chart",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "MS Excel Charts",
   "main": "chart.js",
   "dependencies": {
