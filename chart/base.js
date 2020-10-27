@@ -681,11 +681,11 @@ var Chart = Backbone.Model.extend ({
 							me.writeChart (++ n, row, cb);
 						},
 						function (cb) {
+							row += 2 + me.fields.length;
+							
 							if (n == 1) {
 								return cb ();
 							}
-							row += 2 + me.fields.length;
-							
 							me.read ({file: "[Content_Types].xml"}, function (err, o) {
 								if (err) {
 									return cb (new VError (err, "generateMult"));
