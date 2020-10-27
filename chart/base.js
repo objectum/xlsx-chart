@@ -253,6 +253,7 @@ var Chart = Backbone.Model.extend ({
 	/*
 		Write chart
 	*/
+/*
 	writeChart: function (chartN, cb) {
 		var me = this;
 
@@ -351,10 +352,6 @@ var Chart = Backbone.Model.extend ({
 				ser [chart] = ser [chart] || [];
 				ser [chart].push (r);
 			});
-/*
-			var tag = chart == "column" ? "bar" : chart;
-			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]["c:ser"] = ser;
-*/
 			_.each (ser, function (ser, chart) {
 				if (chart == "column") {
 					if (me.tplName == "charts") {
@@ -374,25 +371,136 @@ var Chart = Backbone.Model.extend ({
 				};
 			});
 			me.removeUnusedCharts (o);
-/*
-			if (me.showVal) {
-				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + tag + "Chart"]["c:dLbls"]["c:showVal"] = {
-					$: {
-						val: "1"
-					}
-				};
-			};
-*/
+
 			if (me.chartTitle) {
 				me.writeTitle (o, me.chartTitle);
 			};
-/*
-			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0];
-			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"][0];
-			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"][0];
-			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"];
-			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:areaChart"];
+			me.write ({file: `xl/charts/chart${chartN}.xml`, object: o});
+			cb ();
+		});
+	},
 */
+	writeChart: function (chartN, row, cb) {
+		var me = this;
+		
+		me.read ({file: "xl/charts/chart1.xml"}, function (err, o) {
+			if (err) {
+				return cb (new VError (err, "writeChart"));
+			}
+			var ser = {};
+			_.each (me.titles, function (t, i) {
+				var chart = me.data [t].chart || me.chart;
+				var r = {
+					"c:idx": {
+						$: {
+							val: i
+						}
+					},
+					"c:order": {
+						$: {
+							val: i
+						}
+					},
+					"c:tx": {
+						"c:strRef": {
+							"c:f": "Table!$" + me.getColName (i + 2) + "$" + row,
+							"c:strCache": {
+								"c:ptCount": {
+									$: {
+										val: 1
+									}
+								},
+								"c:pt": {
+									$: {
+										idx: 0
+									},
+									"c:v": t
+								}
+							}
+						}
+					},
+					"c:cat": {
+						"c:strRef": {
+							"c:f": "Table!$A$" + (row + 1) + ":$A$" + (me.fields.length + row),
+							"c:strCache": {
+								"c:ptCount": {
+									$: {
+										val: me.fields.length
+									}
+								},
+								"c:pt": _.map (me.fields, function (f, j) {
+									return {
+										$: {
+											idx: j
+										},
+										"c:v": f
+									};
+								})
+							}
+						}
+					},
+					"c:val": {
+						"c:numRef": {
+							"c:f": "Table!$" + me.getColName (i + 2) + "$" + (row + 1) + ":$" + me.getColName (i + 2) + "$" + (me.fields.length + row),
+							"c:numCache": {
+								"c:formatCode": "General",
+								"c:ptCount": {
+									$: {
+										val: me.fields.length
+									}
+								},
+								"c:pt": _.map (me.fields, function (f, j) {
+									return {
+										$: {
+											idx: j
+										},
+										"c:v": me.data [t][f]
+									};
+								})
+							}
+						}
+					}
+				};
+				if (chart == "scatter") {
+					r ["c:xVal"] = r ["c:cat"];
+					delete r ["c:cat"];
+					r ["c:yVal"] = r ["c:val"];
+					delete r ["c:val"];
+					r ["c:spPr"] = {
+						"a:ln": {
+							$: {
+								w: 28575
+							},
+							"a:noFill": ""
+						}
+					};
+				};
+				ser [chart] = ser [chart] || [];
+				ser [chart].push (r);
+			});
+			_.each (ser, function (ser, chart) {
+				if (chart == "column") {
+					if (me.tplName == "charts") {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]["c:ser"] = ser;
+					} else {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
+					};
+				} else
+				if (chart == "bar") {
+					if (me.tplName == "charts") {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1]["c:ser"] = ser;
+					} else {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
+					};
+				} else {
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:ser"] = ser;
+				};
+			});
+			me.removeUnusedCharts (o);
+			
+			if (me.chartTitle) {
+				me.writeTitle (o, me.chartTitle);
+			};
 			me.write ({file: `xl/charts/chart${chartN}.xml`, object: o});
 			cb ();
 		});
@@ -501,7 +609,7 @@ var Chart = Backbone.Model.extend ({
 				me.writeTable (cb);
 			},
 			function (cb) {
-				me.writeChart (1, cb);
+				me.writeChart (1, 1, cb);
 			}
 		], function (err) {
 			if (err) {
@@ -563,18 +671,21 @@ var Chart = Backbone.Model.extend ({
 			},
 			function (cb) {
 				let n = 0;
+				let row = 1;
 				
 				async.eachSeries (me.charts, (chart, cb) => {
 					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me [a] = chart [a]);
 					
 					async.series ([
 						function (cb) {
-							me.writeChart (++ n, cb);
+							me.writeChart (++ n, row, cb);
 						},
 						function (cb) {
 							if (n == 1) {
 								return cb ();
 							}
+							row += 2 + me.fields.length;
+							
 							me.read ({file: "[Content_Types].xml"}, function (err, o) {
 								if (err) {
 									return cb (new VError (err, "generateMult"));
