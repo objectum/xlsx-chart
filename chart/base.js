@@ -116,17 +116,29 @@ var Chart = Backbone.Model.extend ({
 			if (err) {
 				return cb (new VError (err, "writeMultTable"));
 			}
-			o.worksheet.dimension.$.ref = `A${row}:${me.getColName (me.titles.length + 1)}${me.fields.length + row}`;
+			o.worksheet.dimension.$.ref = `A${row}:${me.getColName (me.titles.length + 1)}${me.fields.length + row + 1}`;
 			
 			let rows = [{
 				$: {
 					r: row,
+					spans: "1:2"
+				},
+				c: {
+					$: {
+						r: `A${row}`,
+						t: "s"
+					},
+					v: me.getStr (me.chartTitle)
+				}
+			}, {
+				$: {
+					r: row + 1,
 					spans: "1:" + (me.titles.length + 1)
 				},
 				c: _.map (me.titles, function (t, x) {
 					return {
 						$: {
-							r: `${me.getColName (x + 2)}${row}`,
+							r: `${me.getColName (x + 2)}${row + 1}`,
 							t: "s"
 						},
 						v: me.getStr (t)
@@ -136,13 +148,13 @@ var Chart = Backbone.Model.extend ({
 			_.each (me.fields, function (f, y) {
 				let r = {
 					$: {
-						r: y + 1 + row,
+						r: y + 2 + row,
 						spans: "1:" + (me.titles.length + 1)
 					}
 				};
 				let c = [{
 					$: {
-						r: "A" + (y + 1 + row),
+						r: "A" + (y + 2 + row),
 						t: "s"
 					},
 					v: me.getStr (f)
@@ -150,7 +162,7 @@ var Chart = Backbone.Model.extend ({
 				_.each (me.titles, function (t, x) {
 					c.push ({
 						$: {
-							r: me.getColName (x + 2) + (y + 1 + row)
+							r: me.getColName (x + 2) + (y + 2 + row)
 						},
 						v: me.data [t][f]
 					});
@@ -647,6 +659,7 @@ var Chart = Backbone.Model.extend ({
 				me.charts.forEach (chart => {
 					me.titles = [...me.titles, ...chart.titles];
 					me.fields = [...me.fields, ...chart.fields];
+					me.titles.push (chart.chartTitle || "");
 				});
 				me.writeStrings (cb);
 			},
@@ -664,14 +677,14 @@ var Chart = Backbone.Model.extend ({
 						});
 					});
 					me.writeMultTable (row, () => {
-						row += 2 + me.fields.length;
+						row += 3 + me.fields.length;
 						cb ();
 					});
 				}, cb)
 			},
 			function (cb) {
 				let n = 0;
-				let row = 1;
+				let row = 2;
 				
 				async.eachSeries (me.charts, (chart, cb) => {
 					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me [a] = chart [a]);
@@ -681,7 +694,7 @@ var Chart = Backbone.Model.extend ({
 							me.writeChart (++ n, row, cb);
 						},
 						function (cb) {
-							row += 2 + me.fields.length;
+							row += 3 + me.fields.length;
 							
 							if (n == 1) {
 								return cb ();
