@@ -345,7 +345,8 @@ var Chart = Backbone.Model.extend ({
 								})
 							}
 						}
-					}
+					},
+					"c:smooth": me.noSmoothLines ? 0 : undefined //disable line smoothing in chart
 				};
 				if (chart == "scatter") {
 					r ["c:xVal"] = r ["c:cat"];
