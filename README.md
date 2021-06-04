@@ -90,7 +90,9 @@ xlsxChart.writeFile (opts, function (err) {
 
 ```
 
-## Multiple charts
+## Multiple charts (one type)
+
+Only column chart. For other types use custom template.
 
 ```js
 let fs = require ("fs");
