@@ -688,6 +688,19 @@ var Chart = Backbone.Model.extend ({
 				
 				async.eachSeries (me.charts, (chart, cb) => {
 					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me [a] = chart [a]);
+
+					const position = Object.assign({
+						fromColumn: 0,
+						fromColumnOffset: 0,
+						fromRow: n * 20,
+						fromRowOffset: 0,
+						toColumn: 10,
+						toColumnOffset: 0,
+						toRow: (n + 1) * 20,
+						toRowOffset: 0,
+					},
+						chart.position
+					);
 					
 					async.series ([
 						function (cb) {
@@ -748,16 +761,16 @@ var Chart = Backbone.Model.extend ({
 								}
 								o ["xdr:wsDr"]["xdr:twoCellAnchor"].push ({
 									"xdr:from": {
-										"xdr:col": chart.xdr_from_col ?? 0,
-										"xdr:colOff": chart.xdr_from_colOff ?? 0,
-										"xdr:row": chart.xdr_from_row ?? (n - 1) * 20,
-										"xdr:rowOff": chart.xdr_from_rowOff ?? 0
+										"xdr:col": position.fromColumn,
+										"xdr:colOff": position.fromColumnOffset,
+										"xdr:row": position.fromRow,
+										"xdr:rowOff": position.fromRowOffset
 									},
 									"xdr:to": {
-										"xdr:col": chart.xdr_to_col ?? 10,
-										"xdr:colOff": chart.xdr_to_colOff ?? 0,
-										"xdr:row": chart.xdr_to_row ?? n * 20,
-										"xdr:rowOff": chart.xdr_to_rowOff ??0
+										"xdr:col": position.toColumn,
+										"xdr:colOff": position.toColumnOffset,
+										"xdr:row": position.toRow,
+										"xdr:rowOff": position.toRowOffset
 									},
 									"xdr:graphicFrame": {
 										"$": {
