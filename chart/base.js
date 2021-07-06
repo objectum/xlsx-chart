@@ -767,7 +767,7 @@ var Chart = Backbone.Model.extend ({
 											"xdr:cNvPr": {
 												"$": {
 													"id": `${n + 1}`,
-													"name": `Диаграмма ${n}`
+													"name": `Diagram ${n}`
 												}
 											},
 											"xdr:cNvGraphicFramePr": {}
