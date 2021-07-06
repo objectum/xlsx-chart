@@ -748,16 +748,16 @@ var Chart = Backbone.Model.extend ({
 								}
 								o ["xdr:wsDr"]["xdr:twoCellAnchor"].push ({
 									"xdr:from": {
-										"xdr:col": 0,
-										"xdr:colOff": 0,
-										"xdr:row": (n - 1) * 20,
-										"xdr:rowOff": 0
+										"xdr:col": chart.xdr_from_col ?? 0,
+										"xdr:colOff": chart.xdr_from_colOff ?? 0,
+										"xdr:row": chart.xdr_from_row ?? (n - 1) * 20,
+										"xdr:rowOff": chart.xdr_from_rowOff ?? 0
 									},
 									"xdr:to": {
-										"xdr:col": 10,
-										"xdr:colOff": 0,
-										"xdr:row": n * 20,
-										"xdr:rowOff": 0
+										"xdr:col": chart.xdr_to_col ?? 10,
+										"xdr:colOff": chart.xdr_to_colOff ?? 0,
+										"xdr:row": chart.xdr_to_row ?? n * 20,
+										"xdr:rowOff": chart.xdr_to_rowOff ??0
 									},
 									"xdr:graphicFrame": {
 										"$": {
