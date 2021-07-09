@@ -749,12 +749,21 @@ var Chart = Backbone.Model.extend ({
 							});
 						},
 						function (cb) {
-							if (n == 1) {
-								return cb ();
-							}
 							me.read ({file: "xl/drawings/drawing1.xml"}, function (err, o) {
 								if (err) {
 									return cb (new VError (err, "generateMult"));
+								}
+								if (n == 1) {
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:from"]["xdr:col"] = position.fromColumn;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:from"]["xdr:colOff"] = position.fromColumnOffset;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:from"]["xdr:row"] = position.fromRow;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:from"]["xdr:rowOff"] = position.fromRowOffset;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:col"] = position.toColumn;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:colOff"] = position.toColumnOffset;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:row"] = position.toRow;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:rowOff"] = position.toRowOffset;
+									me.write ({file: `xl/drawings/drawing1.xml`, object: o});
+									return cb ();
 								}
 								if (n == 2) {
 									o ["xdr:wsDr"]["xdr:twoCellAnchor"] = [o ["xdr:wsDr"]["xdr:twoCellAnchor"]];
