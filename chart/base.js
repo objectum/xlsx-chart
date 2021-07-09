@@ -402,6 +402,43 @@ var Chart = Backbone.Model.extend ({
 			var ser = {};
 			_.each (me.titles, function (t, i) {
 				var chart = me.data [t].chart || me.chart;
+				var customColorsPoints = {
+					"c:dPt": [],
+				};
+				if (me.charts [chartN - 1].customColors) {
+					console.warn(me)
+					customColorsPoints ["c:dPt"] = Object.values(me.charts [chartN - 1].customColors[t] || {}).map(function(color, i) {
+						if (!color) {
+							return null;
+						}
+						return {
+							"c:idx": {
+								$: {
+									val: i,
+								},
+							},
+							"c:spPr": {
+								"a:solidFill": {
+									"a:srgbClr": {
+										$: {
+											val: color,
+										},
+									},
+								},
+								"a:ln": {
+									"a:solidFill": {
+										"a:srgbClr": {
+											$: {
+												val: color,
+											},
+										},
+									},
+								},
+							},
+						}
+					}).filter(Boolean);
+				}
+				console.warn(customColorsPoints)
 				var r = {
 					"c:idx": {
 						$: {
@@ -431,6 +468,7 @@ var Chart = Backbone.Model.extend ({
 							}
 						}
 					},
+					...customColorsPoints,
 					"c:cat": {
 						"c:strRef": {
 							"c:f": "Table!$A$" + (row + 1) + ":$A$" + (me.fields.length + row),
