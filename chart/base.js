@@ -400,45 +400,98 @@ var Chart = Backbone.Model.extend ({
 				return cb (new VError (err, "writeChart"));
 			}
 			var ser = {};
+			const chartOpts = me.charts [chartN - 1];
 			_.each (me.titles, function (t, i) {
 				var chart = me.data [t].chart || me.chart;
 				var customColorsPoints = {
 					"c:dPt": [],
 				};
-				if (me.charts [chartN - 1].customColors) {
-					console.warn(me)
-					customColorsPoints ["c:dPt"] = Object.values(me.charts [chartN - 1].customColors[t] || {}).map(function(color, i) {
-						if (!color) {
-							return null;
-						}
-						return {
-							"c:idx": {
-								$: {
-									val: i,
-								},
-							},
-							"c:spPr": {
-								"a:solidFill": {
-									"a:srgbClr": {
+				var customColorsSeries = {};
+
+				if (chartOpts.customColors) {
+					const customColors = chartOpts.customColors;
+
+					if (customColors.points) {
+						customColorsPoints ["c:dPt"] = chartOpts.fields.map(function(field, i) {
+							const color = _.chain(customColors).get('points').get(t).get(field, null).value();
+
+							if (!color) {
+								return null;
+							}
+							if (color === 'noFill') {
+								return {
+									"c:idx": {
 										$: {
-											val: color,
+											val: i,
 										},
 									},
+									"c:spPr": {
+										'a:noFill': ''
+									}
+								}
+							}
+							let fillColor = color;
+							let lineColor = color;
+							if (typeof color === 'object') {
+								fillColor = color.fill;
+								lineColor = color.line;
+							}
+							return {
+								"c:idx": {
+									$: {
+										val: i,
+									},
 								},
-								"a:ln": {
+								"c:spPr": {
 									"a:solidFill": {
 										"a:srgbClr": {
 											$: {
-												val: color,
+												val: fillColor,
+											},
+										},
+									},
+									"a:ln": {
+										"a:solidFill": {
+											"a:srgbClr": {
+												$: {
+													val: lineColor,
+												},
 											},
 										},
 									},
 								},
-							},
+							}
+						}).filter(Boolean);
+					}
+
+					if (customColors.series && customColors.series[t]) {
+						let fillColor = customColors.series[t];
+						let lineColor = customColors.series[t];
+						if (typeof customColors.series === 'object') {
+							fillColor = customColors.series[t].fill;
+							lineColor = customColors.series[t].line;
 						}
-					}).filter(Boolean);
+						customColorsSeries ["c:spPr"] = {
+							"a:solidFill": {
+								"a:srgbClr": {
+									$: {
+										val: fillColor,
+									},
+								},
+							},
+							"a:ln": {
+								"a:solidFill": {
+									"a:srgbClr": {
+										$: {
+											val: lineColor,
+										},
+									},
+								},
+							},
+						};
+					}
 				}
-				console.warn(customColorsPoints)
+
 				var r = {
 					"c:idx": {
 						$: {
@@ -469,6 +522,7 @@ var Chart = Backbone.Model.extend ({
 						}
 					},
 					...customColorsPoints,
+					...customColorsSeries,
 					"c:cat": {
 						"c:strRef": {
 							"c:f": "Table!$A$" + (row + 1) + ":$A$" + (me.fields.length + row),
