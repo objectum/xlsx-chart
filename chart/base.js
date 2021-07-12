@@ -225,20 +225,20 @@ var Chart = Backbone.Model.extend ({
 			});
 		};
 		_.each (["line", "radar", "area", "scatter", "pie"], function (chart) {
-			if (!me.charts [chart]) {
+			if (!me.chartTypes [chart]) {
 				delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"];
 			} else {
 				addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]);
 			};
 		});
-		if (!me.charts ["column"] && !me.charts ["bar"]) {
+		if (!me.chartTypes ["column"] && !me.chartTypes ["bar"]) {
 			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
 		} else
-		if (me.charts ["column"] && !me.charts ["bar"]) {
+		if (me.chartTypes ["column"] && !me.chartTypes ["bar"]) {
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0];
 			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
 		} else
-		if (!me.charts ["column"] && me.charts ["bar"]) {
+		if (!me.chartTypes ["column"] && me.chartTypes ["bar"]) {
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1];
 			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
 		} else {
@@ -650,27 +650,28 @@ var Chart = Backbone.Model.extend ({
 	/*
 		Set template name
 	*/
-	setTemplateName: function () {
+	setTemplateName: function (opts) {
 		var me = this;
-		var charts = {};
+		var chartTypes = {};
 		_.each (me.data, function (o) {
-			charts [o.chart || me.chart] = true;
+			chartTypes [o.chart || me.chart] = true;
 		});
-		me.charts = charts;
-		if (charts ["radar"]) {
+		me.charts = [opts];
+		me.chartTypes = chartTypes;
+		if (chartTypes ["radar"]) {
 			me.tplName = "radar";
 			return;
 		};
-		if (charts ["scatter"]) {
+		if (chartTypes ["scatter"]) {
 			me.tplName = "scatter";
 			return;
 		};
-		if (charts ["pie"]) {
+		if (chartTypes ["pie"]) {
 			me.tplName = "pie";
 			return;
 		};
-		if (_.keys (charts).length == 1) {
-			me.tplName = _.keys (charts) [0];
+		if (_.keys (chartTypes).length == 1) {
+			me.tplName = _.keys (chartTypes) [0];
 			return;
 		};
 		me.tplName = "charts";
@@ -689,7 +690,7 @@ var Chart = Backbone.Model.extend ({
 		async.series ([
 			function (cb) {
 				me.zip = new JSZip ();
-				me.setTemplateName ();
+				me.setTemplateName (opts);
 				let path = me.templatePath ? me.templatePath : (__dirname + "/../template/" + me.tplName + ".xlsx");
 				fs.readFile(path, function (err, data) {
 					if (err) {
