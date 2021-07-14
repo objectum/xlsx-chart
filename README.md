@@ -208,15 +208,23 @@ var opts = {
 			chart: "column", // pie, doughnut, line, area, bar
 			titles: [
 				"title1", // list of chart titles
+				"title2", // list of chart titles
 			],
 			fields: [
 				"field1", // list of chart fields
+				"field2",
 			],
 			data: {
 				"title1": {
 					"field1": 123, // structured data
+					"field2": 321,
+				},
+				"title2": {
+					"field1": 456,
+					"field2": 654,
 				},
 			},
+			chartTitle: "Title",
 			position: { // optional: chart position
 				fromColumn: 0, 			// chart top left x coordinate in columns
 				fromColumnOffset: 0, 	// chart top left x coordinate in pixels
@@ -227,8 +235,31 @@ var opts = {
 				toRow: (n + 1) * 20, 	// chart bottom right y coordinate in columns
 				toRowOffset: 0, 		// chart bottom right y coordinate in pixels
 			},
-		}
-	]
+			customColors: { // optional: chart colors
+				points: {
+					"title1": {
+						"field1": "FF0000", // colors in the same structure as data; not all points required
+						"field1": {
+							fill: "FF0000", // separate colors for fill and border could be set
+							line: "FF0000",
+						},
+					},
+				},
+				series: {
+					"title1": "FF0000", // whole series color could be also set
+					"title2": {
+						fill: "FF0000", // separate colors for fill and border could be set
+						line: "FF0000",
+						markerColor: "FF0000", // different marker color also could be set for line chart
+					},
+				},
+			},
+			firstSliceAng: 270, // optional: first slice angle for pie and doughnut chart in degrees
+			holeSize: 50, // optional: hole size of doughnut chart in percent
+			legendPos: "r", // optional: 'l', 't', 'r', 'b', null - legend position; null to hide; right is default
+			deleteEmptyCells: false, // optional: allow to will empty values with 0 or leave as gaps
+		},
+	],
 };
 
 xlsxChart.writeFile (opts, function (err) {
