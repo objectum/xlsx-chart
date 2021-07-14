@@ -198,6 +198,45 @@ xlsxChart.generate (opts, function (err, data) {
 });
 ```
 
+## Available chart options
+```js
+var opts = {
+	file: "chart.xlsx", // exported file
+	type: "nodebuffer", // optional: used by JSZip library
+	charts: [
+		{
+			chart: "column", // pie, doughnut, line, area, bar
+			titles: [
+				"title1", // list of chart titles
+			],
+			fields: [
+				"field1", // list of chart fields
+			],
+			data: {
+				"title1": {
+					"field1": 123, // structured data
+				},
+			},
+			position: { // optional: chart position
+				fromColumn: 0, 			// chart top left x coordinate in columns
+				fromColumnOffset: 0, 	// chart top left x coordinate in pixels
+				fromRow: n * 20, 		// chart top left y coordinate in columns
+				fromRowOffset: 0, 		// chart top left y coordinate in pixels
+				toColumn: 10, 			// chart bottom right x coordinate in columns
+				toColumnOffset: 0, 		// chart bottom right x coordinate in pixels
+				toRow: (n + 1) * 20, 	// chart bottom right y coordinate in columns
+				toRowOffset: 0, 		// chart bottom right y coordinate in pixels
+			},
+		}
+	]
+};
+
+xlsxChart.writeFile (opts, function (err) {
+  console.log ("File: ", opts.file);
+});
+
+```
+
 ## Examples
 
 <a href="examples/column.js">column.js</a>  
