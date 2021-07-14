@@ -467,9 +467,11 @@ var Chart = Backbone.Model.extend ({
 					if (customColors.series && customColors.series[t]) {
 						let fillColor = customColors.series[t];
 						let lineColor = customColors.series[t];
+						let markerColor = customColors.series[t];
 						if (typeof customColors.series === 'object') {
 							fillColor = customColors.series[t].fill;
 							lineColor = customColors.series[t].line;
+							markerColor = customColors.series[t].marker;
 						}
 						customColorsSeries ["c:spPr"] = {
 							"a:solidFill": {
@@ -484,6 +486,17 @@ var Chart = Backbone.Model.extend ({
 									"a:srgbClr": {
 										$: {
 											val: lineColor,
+										},
+									},
+								},
+							},
+							"c:marker": {
+								"c:spPr": {
+									"a:solidFill": {
+										"a:srgbClr": {
+											$: {
+												val: markerColor,
+											},
 										},
 									},
 								},
