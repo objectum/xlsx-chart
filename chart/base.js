@@ -602,15 +602,89 @@ var Chart = Backbone.Model.extend ({
 					} else {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
 					};
-				} else
-				if (chart == "bar") {
+				} else if (chart == "bar") {
 					if (me.tplName == "charts") {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1]["c:ser"] = ser;
 					} else {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
 					};
 				} else {
+					if (!o ["c:chartSpace"]["c:chart"]["c:plotArea"][`c:${chart}Chart`]) {
+						// minimal chart config
+						o ["c:chartSpace"]["c:chart"] = {
+							"c:autoTitleDeleted": {
+								$: {
+									val: 0,
+								},
+							},
+							"c:plotArea": {
+								[`c:${chart}Chart`]: {
+									"c:varyColors": {
+										$: {
+											val: 1,
+										},
+									},
+								},
+							},
+						};
+					}
+					// set series data
 					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:ser"] = ser;
+					if (chartOpts.firstSliceAng) {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:firstSliceAng"] = {
+							$: {
+								val: chartOpts.firstSliceAng,
+							},
+						};
+					}
+					if (chartOpts.holeSize) {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:holeSize"] = {
+							$: {
+								val: chartOpts.holeSize,
+							},
+						};
+					}
+					// if (chartOpts.showLabels) {
+					// 	o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:dLbls"] = {
+					// 		"c:showLegendKey": {
+					// 			$: {
+					// 				val: 1,
+					// 			},
+					// 		},
+					// 		"c:showVal": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showCatName": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showSerName": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showPercent": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showBubbleSize": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showLeaderLines": {
+					// 			$: {
+					// 				val: 1,
+					// 			},
+					// 		},
+					// 	};
+					// }
+					// o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:grouping"] = { $: { val: 'standard' } };
+					
 				};
 			});
 			me.removeUnusedCharts (o);
