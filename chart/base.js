@@ -686,6 +686,18 @@ var Chart = Backbone.Model.extend ({
 					// o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:grouping"] = { $: { val: 'standard' } };
 					
 				};
+
+				if (chartOpts.legendPos === undefined || chartOpts.legendPos) {
+					o ["c:chartSpace"]["c:chart"]["c:legend"] = {
+						"c:legendPos": {
+							$: {
+								val: chartOpts.legendPos || 'r',
+							},
+						},
+					};
+				} else if (chartOpts.legendPos === null) {
+					delete o ["c:chartSpace"]["c:chart"]["c:legend"];
+				}
 			});
 			me.removeUnusedCharts (o);
 			
