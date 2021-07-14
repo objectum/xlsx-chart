@@ -688,6 +688,19 @@ var Chart = Backbone.Model.extend ({
 				
 				async.eachSeries (me.charts, (chart, cb) => {
 					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me [a] = chart [a]);
+
+					const position = Object.assign({
+						fromColumn: 0,
+						fromColumnOffset: 0,
+						fromRow: n * 20,
+						fromRowOffset: 0,
+						toColumn: 10,
+						toColumnOffset: 0,
+						toRow: (n + 1) * 20,
+						toRowOffset: 0,
+					},
+						chart.position
+					);
 					
 					async.series ([
 						function (cb) {
@@ -736,28 +749,37 @@ var Chart = Backbone.Model.extend ({
 							});
 						},
 						function (cb) {
-							if (n == 1) {
-								return cb ();
-							}
 							me.read ({file: "xl/drawings/drawing1.xml"}, function (err, o) {
 								if (err) {
 									return cb (new VError (err, "generateMult"));
+								}
+								if (n == 1) {
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:from"]["xdr:col"] = position.fromColumn;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:from"]["xdr:colOff"] = position.fromColumnOffset;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:from"]["xdr:row"] = position.fromRow;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:from"]["xdr:rowOff"] = position.fromRowOffset;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:col"] = position.toColumn;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:colOff"] = position.toColumnOffset;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:row"] = position.toRow;
+									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:rowOff"] = position.toRowOffset;
+									me.write ({file: `xl/drawings/drawing1.xml`, object: o});
+									return cb ();
 								}
 								if (n == 2) {
 									o ["xdr:wsDr"]["xdr:twoCellAnchor"] = [o ["xdr:wsDr"]["xdr:twoCellAnchor"]];
 								}
 								o ["xdr:wsDr"]["xdr:twoCellAnchor"].push ({
 									"xdr:from": {
-										"xdr:col": 0,
-										"xdr:colOff": 0,
-										"xdr:row": (n - 1) * 20,
-										"xdr:rowOff": 0
+										"xdr:col": position.fromColumn,
+										"xdr:colOff": position.fromColumnOffset,
+										"xdr:row": position.fromRow,
+										"xdr:rowOff": position.fromRowOffset
 									},
 									"xdr:to": {
-										"xdr:col": 10,
-										"xdr:colOff": 0,
-										"xdr:row": n * 20,
-										"xdr:rowOff": 0
+										"xdr:col": position.toColumn,
+										"xdr:colOff": position.toColumnOffset,
+										"xdr:row": position.toRow,
+										"xdr:rowOff": position.toRowOffset
 									},
 									"xdr:graphicFrame": {
 										"$": {
@@ -767,7 +789,7 @@ var Chart = Backbone.Model.extend ({
 											"xdr:cNvPr": {
 												"$": {
 													"id": `${n + 1}`,
-													"name": `Диаграмма ${n}`
+													"name": `Diagram ${n}`
 												}
 											},
 											"xdr:cNvGraphicFramePr": {}
