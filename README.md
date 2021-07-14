@@ -254,6 +254,18 @@ var opts = {
 					},
 				},
 			},
+			manualLayout: { // optional blocks position on the chart canvas
+				plotArea: { // chart position
+					x: 0.5, // x and y of top left corner in proportion value 0..1
+					y: 0.5,
+					w: 0.5, // width and height of block point in proportion value 0..1
+					h: 0.5,
+				},
+				title: {
+					x: 0.5, // x and y of top left corner in proportion value 0..1
+					y: 0.5,
+				},
+			},
 			firstSliceAng: 270, // optional: first slice angle for pie and doughnut chart in degrees
 			holeSize: 50, // optional: hole size of doughnut chart in percent
 			legendPos: "r", // optional: 'l', 't', 'r', 'b', null - legend position; null to hide; right is default
