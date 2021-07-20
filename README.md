@@ -206,6 +206,7 @@ var opts = {
 	charts: [
 		{
 			chart: "column", // pie, doughnut, line, area, bar
+			grouping: "clustered", // optional: stacked, standard - allow to create stacked bar or line chart
 			titles: [
 				"title1", // list of chart titles
 				"title2", // list of chart titles
@@ -215,6 +216,8 @@ var opts = {
 				"field2",
 			],
 			data: {
+				// chart: "column", // could be used to create multi-layer charts with e.g. column + bar + line + area chart in the same object
+				// grouping: "clustered", // same as common grouping option, but only for current layer;
 				"title1": {
 					"field1": 123, // structured data
 					"field2": 321,
