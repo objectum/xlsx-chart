@@ -18,7 +18,7 @@ var Chart = Backbone.Model.extend ({
 				return new VError (err, "getXML");
 			}
 			cb (err, o);
-	    });
+		});
 	},
 	/*
 		Build XML from object and write to zip
@@ -34,11 +34,11 @@ var Chart = Backbone.Model.extend ({
 	*/
 	getColName: function (n) {
 		var abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		n --;
+		n--;
 		if (n < 26) {
-			return abc [n];
+			return abc[n];
 		} else {
-			return abc [(n / 26 - 1) | 0] + abc [n % 26];
+			return abc[(n / 26 - 1) | 0] + abc[n % 26];
 		}
 	},
 	/*
@@ -49,7 +49,7 @@ var Chart = Backbone.Model.extend ({
 		if (!me.str.hasOwnProperty (s)) {
 			throw new VError ("getStr: Unknown string: " + s);
 		}
-		return me.str [s];
+		return me.str[s];
 	},
 	/*
 		Write table
@@ -95,7 +95,7 @@ var Chart = Backbone.Model.extend ({
 						$: {
 							r: me.getColName (x + 2) + (y + 2)
 						},
-						v: me.data [t][f]
+						v: me.data[t][f]
 					});
 				});
 				r.c = c;
@@ -111,13 +111,13 @@ var Chart = Backbone.Model.extend ({
 	*/
 	writeMultTable: function (row, cb) {
 		let me = this;
-		
+
 		me.read ({file: "xl/worksheets/sheet2.xml"}, function (err, o) {
 			if (err) {
 				return cb (new VError (err, "writeMultTable"));
 			}
 			o.worksheet.dimension.$.ref = `A${row}:${me.getColName (me.titles.length + 1)}${me.fields.length + row + 1}`;
-			
+
 			let rows = [{
 				$: {
 					r: row,
@@ -164,7 +164,7 @@ var Chart = Backbone.Model.extend ({
 						$: {
 							r: me.getColName (x + 2) + (y + 2 + row)
 						},
-						v: me.data [t][f]
+						v: me.data[t][f]
 					});
 				});
 				r.c = c;
@@ -184,16 +184,16 @@ var Chart = Backbone.Model.extend ({
 	*/
 	writeStrings: function (cb) {
 		let me = this;
-		
+
 		me.read ({file: "xl/sharedStrings.xml"}, function (err, o) {
 			if (err) {
 				return cb (new VError (err, "writeStrings"));
 			}
 			o.sst.$.count = me.titles.length + me.fields.length;
 			o.sst.$.uniqueCount = o.sst.$.count;
-			
+
 			let si = [];
-			
+
 			_.each (me.titles, function (t) {
 				si.push ({t: t});
 			});
@@ -201,9 +201,9 @@ var Chart = Backbone.Model.extend ({
 				si.push ({t: t});
 			});
 			me.str = {};
-			
+
 			_.each (si, function (o, i) {
-				me.str [o.t] = i;
+				me.str[o.t] = i;
 			});
 			o.sst.si = si;
 			me.write ({file: "xl/sharedStrings.xml", object: o});
@@ -265,7 +265,7 @@ var Chart = Backbone.Model.extend ({
 	/*
 		Write chart
 	*/
-/*
+	/*
 	writeChart: function (chartN, cb) {
 		var me = this;
 
@@ -391,18 +391,18 @@ var Chart = Backbone.Model.extend ({
 			cb ();
 		});
 	},
-*/
+	*/
 	writeChart: function (chartN, row, cb) {
 		var me = this;
-		
+
 		me.read ({file: "xl/charts/chart1.xml"}, function (err, o) {
 			if (err) {
 				return cb (new VError (err, "writeChart"));
 			}
 			var ser = {};
-			const chartOpts = me.charts [chartN - 1];
+			const chartOpts = me.charts[chartN - 1];
 			_.each (me.titles, function (t, i) {
-				var chart = me.data [t].chart || me.chart;
+				var chart = me.data[t].chart || me.chart;
 				var customColorsPoints = {
 					"c:dPt": [],
 				};
@@ -412,13 +412,13 @@ var Chart = Backbone.Model.extend ({
 					const customColors = chartOpts.customColors;
 
 					if (customColors.points) {
-						customColorsPoints ["c:dPt"] = chartOpts.fields.map(function(field, i) {
-							const color = _.chain(customColors).get('points').get(t).get(field, null).value();
+						customColorsPoints["c:dPt"] = chartOpts.fields.map (function (field, i) {
+							const color = _.chain (customColors).get ("points").get (t).get (field, null).value ();
 
 							if (!color) {
 								return null;
 							}
-							if (color === 'noFill') {
+							if (color === "noFill") {
 								return {
 									"c:idx": {
 										$: {
@@ -426,13 +426,13 @@ var Chart = Backbone.Model.extend ({
 										},
 									},
 									"c:spPr": {
-										'a:noFill': ''
+										"a:noFill": ""
 									}
 								}
 							}
 							let fillColor = color;
 							let lineColor = color;
-							if (typeof color === 'object') {
+							if (typeof color === "object") {
 								fillColor = color.fill;
 								lineColor = color.line;
 							}
@@ -461,19 +461,19 @@ var Chart = Backbone.Model.extend ({
 									},
 								},
 							}
-						}).filter(Boolean);
+						}).filter (Boolean);
 					}
 
 					if (customColors.series && customColors.series[t]) {
 						let fillColor = customColors.series[t];
 						let lineColor = customColors.series[t];
 						let markerColor = customColors.series[t];
-						if (typeof customColors.series === 'object') {
+						if (typeof customColors.series === "object") {
 							fillColor = customColors.series[t].fill;
 							lineColor = customColors.series[t].line;
 							markerColor = customColors.series[t].marker;
 						}
-						customColorsSeries ["c:spPr"] = {
+						customColorsSeries["c:spPr"] = {
 							"a:solidFill": {
 								"a:srgbClr": {
 									$: {
@@ -571,7 +571,7 @@ var Chart = Backbone.Model.extend ({
 										$: {
 											idx: j
 										},
-										"c:v": me.data [t][f]
+										"c:v": me.data[t][f]
 									};
 								})
 							}
@@ -579,11 +579,11 @@ var Chart = Backbone.Model.extend ({
 					}
 				};
 				if (chart == "scatter") {
-					r ["c:xVal"] = r ["c:cat"];
-					delete r ["c:cat"];
-					r ["c:yVal"] = r ["c:val"];
-					delete r ["c:val"];
-					r ["c:spPr"] = {
+					r["c:xVal"] = r["c:cat"];
+					delete r["c:cat"];
+					r["c:yVal"] = r["c:val"];
+					delete r["c:val"];
+					r["c:spPr"] = {
 						"a:ln": {
 							$: {
 								w: 28575
@@ -592,8 +592,8 @@ var Chart = Backbone.Model.extend ({
 						}
 					};
 				};
-				ser [chart] = ser [chart] || [];
-				ser [chart].push (r);
+				ser[chart] = ser[chart] || [];
+				ser[chart].push (r);
 			});
 			_.each (ser, function (ser, chart) {
 				if (chart == "column") {
@@ -612,7 +612,7 @@ var Chart = Backbone.Model.extend ({
 					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"] || o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
 					delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
 					delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:barDir"];
-					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:grouping"] = { $: { val: 'standard' } };
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:grouping"] = {$: {val: "standard"}};
 					if (me.tplName == "charts") {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"][1]["c:ser"] = ser;
 					} else {
@@ -694,14 +694,14 @@ var Chart = Backbone.Model.extend ({
 					// 	};
 					// }
 					// o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:grouping"] = { $: { val: 'standard' } };
-					
+
 				};
 
 				if (chartOpts.legendPos === undefined || chartOpts.legendPos) {
 					o ["c:chartSpace"]["c:chart"]["c:legend"] = {
 						"c:legendPos": {
 							$: {
-								val: chartOpts.legendPos || 'r',
+								val: chartOpts.legendPos || "r",
 							},
 						},
 					};
@@ -714,12 +714,12 @@ var Chart = Backbone.Model.extend ({
 					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:layout"]["c:manualLayout"] = {
 						"c:xMode": {
 							$: {
-								val: 'edge',
+								val: "edge",
 							},
 						},
 						"c:yMode": {
 							$: {
-								val: 'edge',
+								val: "edge",
 							},
 						},
 						"c:x": {
@@ -765,12 +765,12 @@ var Chart = Backbone.Model.extend ({
 			layout["c:manualLayout"] = {
 				"c:xMode": {
 					$: {
-						val: 'edge',
+						val: "edge",
 					},
 				},
 				"c:yMode": {
 					$: {
-						val: 'edge',
+						val: "edge",
 					},
 				},
 				"c:x": {
@@ -834,16 +834,16 @@ var Chart = Backbone.Model.extend ({
 			me.tplName = "radar";
 			return;
 		};
-		if (chartTypes ["scatter"]) {
+		if (chartTypes["scatter"]) {
 			me.tplName = "scatter";
 			return;
 		};
-		if (chartTypes ["pie"]) {
+		if (chartTypes["pie"]) {
 			me.tplName = "pie";
 			return;
 		};
 		if (_.keys (chartTypes).length == 1) {
-			me.tplName = _.keys (chartTypes) [0];
+			me.tplName = _.keys (chartTypes)[0];
 			return;
 		};
 		me.tplName = "charts";
@@ -864,9 +864,9 @@ var Chart = Backbone.Model.extend ({
 				me.zip = new JSZip ();
 				me.setTemplateName (opts);
 				let path = me.templatePath ? me.templatePath : (__dirname + "/../template/" + me.tplName + ".xlsx");
-				fs.readFile(path, function (err, data) {
+				fs.readFile (path, function (err, data) {
 					if (err) {
-						console.error(`Template ${path} not read: ${err}`);
+						console.error (`Template ${path} not read: ${err}`);
 						return cb (err);
 					};
 					me.zip.load (data);
@@ -878,9 +878,9 @@ var Chart = Backbone.Model.extend ({
 			},
 			function (cb) {
 				_.each (me.titles, function (t) {
-					me.data [t] = me.data [t] || {};
+					me.data[t] = me.data[t] || {};
 					_.each (me.fields, function (f) {
-						me.data [t][f] = me.data [t][f] || (me.deleteEmptyCells ? '' : 0); //deleteEmptyCells - don't display missing values as 0
+						me.data[t][f] = me.data[t][f] || (me.deleteEmptyCells ? "" : 0); //deleteEmptyCells - don't display missing values as 0
 					});
 				});
 				me.writeTable (cb);
@@ -898,19 +898,19 @@ var Chart = Backbone.Model.extend ({
 	},
 	generateMult: function (opts, cb) {
 		let me = this;
-		
+
 		opts.type = opts.type || "nodebuffer";
 		_.extend (me, opts);
 		
 		async.series ([
 			function (cb) {
 				me.zip = new JSZip ();
-				
+
 				let path = me.templatePath || (__dirname + "/../template/mult.xlsx");
-				
+
 				fs.readFile (path, function (err, data) {
 					if (err) {
-						console.error(`Template ${path} not read: ${err}`);
+						console.error (`Template ${path} not read: ${err}`);
 						return cb (err);
 					}
 					me.zip.load (data);
@@ -920,7 +920,7 @@ var Chart = Backbone.Model.extend ({
 			function (cb) {
 				me.titles = [];
 				me.fields = [];
-				
+
 				me.charts.forEach (chart => {
 					me.titles = [...me.titles, ...chart.titles];
 					me.fields = [...me.fields, ...chart.fields];
@@ -930,15 +930,15 @@ var Chart = Backbone.Model.extend ({
 			},
 			function (cb) {
 				let row = 1;
-				
+
 				async.eachSeries (me.charts, (chart, cb) => {
-					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me [a] = chart [a]);
-					
+					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me[a] = chart[a]);
+
 					_.each (me.titles, function (t) {
-						me.data [t] = me.data [t] || {};
-						
+						me.data[t] = me.data[t] || {};
+
 						_.each (me.fields, function (f) {
-							me.data [t][f] = me.data [t][f] || 0;
+							me.data[t][f] = me.data[t][f] || 0;
 						});
 					});
 					me.writeMultTable (row, () => {
@@ -950,11 +950,11 @@ var Chart = Backbone.Model.extend ({
 			function (cb) {
 				let n = 0;
 				let row = 2;
-				
-				async.eachSeries (me.charts, (chart, cb) => {
-					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me [a] = chart [a]);
 
-					const position = Object.assign({
+				async.eachSeries (me.charts, (chart, cb) => {
+					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me[a] = chart[a]);
+
+					const position = Object.assign ({
 						fromColumn: 0,
 						fromColumnOffset: 0,
 						fromRow: n * 20,
@@ -964,16 +964,16 @@ var Chart = Backbone.Model.extend ({
 						toRow: (n + 1) * 20,
 						toRowOffset: 0,
 					},
-						chart.position
+					chart.position
 					);
-					
+
 					async.series ([
 						function (cb) {
-							me.writeChart (++ n, row, cb);
+							me.writeChart (++n, row, cb);
 						},
 						function (cb) {
 							row += 3 + me.fields.length;
-							
+
 							if (n == 1) {
 								return cb ();
 							}
@@ -987,7 +987,7 @@ var Chart = Backbone.Model.extend ({
 										"PartName": `/xl/charts/chart${n}.xml`
 									}
 								});
-								me.write ({file: `[Content_Types].xml`, object: o});
+								me.write ({file: "[Content_Types].xml", object: o});
 								cb ();
 							});
 						},
@@ -1009,7 +1009,7 @@ var Chart = Backbone.Model.extend ({
 										"Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart"
 									}
 								});
-								me.write ({file: `xl/drawings/_rels/drawing1.xml.rels`, object: o});
+								me.write ({file: "xl/drawings/_rels/drawing1.xml.rels", object: o});
 								cb ();
 							});
 						},
@@ -1027,7 +1027,7 @@ var Chart = Backbone.Model.extend ({
 									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:colOff"] = position.toColumnOffset;
 									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:row"] = position.toRow;
 									o ["xdr:wsDr"]["xdr:twoCellAnchor"]["xdr:to"]["xdr:rowOff"] = position.toRowOffset;
-									me.write ({file: `xl/drawings/drawing1.xml`, object: o});
+									me.write ({file: "xl/drawings/drawing1.xml", object: o});
 									return cb ();
 								}
 								if (n == 2) {
@@ -1090,7 +1090,7 @@ var Chart = Backbone.Model.extend ({
 									},
 									"xdr:clientData": {}
 								});
-								me.write ({file: `xl/drawings/drawing1.xml`, object: o});
+								me.write ({file: "xl/drawings/drawing1.xml", object: o});
 								cb ();
 							});
 						}
@@ -1102,7 +1102,7 @@ var Chart = Backbone.Model.extend ({
 				return cb (new VError (err, "build"));
 			}
 			let result = me.zip.generate ({type: me.type});
-			
+
 			cb (null, result);
 		});
 	}
