@@ -11,9 +11,13 @@
     "verror": "^1.6.0",
     "xml2js": "^0.4.13"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^7.30.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint ./",
+    "lint:fix": "eslint ./ --fix"
   },
   "repository": {
     "type": "git",
