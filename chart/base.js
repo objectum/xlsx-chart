@@ -6,6 +6,28 @@ var VError = require ("verror");
 var fs = require ("fs");
 var async = require ("async");
 
+const CHART_TAG_BY_CHART_NAME = {
+	bar: "c:barChart",
+	column: "c:barChart",
+	line: "c:lineChart",
+	radar: "c:radarChart",
+	area: "c:areaChart",
+	scatter: "c:scatterChart",
+	pie: "c:pieChart",
+	doughnut: "c:doughnutChart",
+};
+
+const CHART_GROUPING_BY_CHART_NAME = {
+	bar: "clustered",
+	column: "clustered",
+	line: "standard",
+	radar: undefined, // radar, scatter, pie and doughnut charts should not have "c:grouping" tag, otherwise rest of xml is ignored
+	area: "standard",
+	scatter: undefined,
+	pie: undefined,
+	doughnut: undefined,
+};
+
 const CHART_TYPES = ["bar", "column", "line", "radar", "area", "scatter", "pie", "doughnut"];
 
 var Chart = Backbone.Model.extend ({
@@ -416,10 +438,12 @@ var Chart = Backbone.Model.extend ({
 			if (err) {
 				return cb (new VError (err, "writeChart"));
 			}
-			var ser = {};
+			var seriesByChart = {};
 			const chartOpts = me.charts[chartN - 1];
 			_.each (me.titles, function (t, i) {
 				var chart = me.data[t].chart || me.chart;
+				var grouping = me.data[t].grouping || me.grouping || CHART_GROUPING_BY_CHART_NAME[chart];
+
 				var customColorsPoints = {
 					"c:dPt": [],
 				};
@@ -522,7 +546,7 @@ var Chart = Backbone.Model.extend ({
 					}
 				}
 
-				var r = {
+				var ser = {
 					"c:idx": {
 						$: {
 							val: i
@@ -596,11 +620,11 @@ var Chart = Backbone.Model.extend ({
 					}
 				};
 				if (chart == "scatter") {
-					r["c:xVal"] = r["c:cat"];
-					delete r["c:cat"];
-					r["c:yVal"] = r["c:val"];
-					delete r["c:val"];
-					r["c:spPr"] = {
+					ser["c:xVal"] = ser["c:cat"];
+					delete ser["c:cat"];
+					ser["c:yVal"] = ser["c:val"];
+					delete ser["c:val"];
+					ser["c:spPr"] = {
 						"a:ln": {
 							$: {
 								w: 28575
@@ -609,8 +633,9 @@ var Chart = Backbone.Model.extend ({
 						}
 					};
 				};
-				ser[chart] = ser[chart] || [];
-				ser[chart].push (r);
+				const seriesKey = `${chart}\r\r${grouping}`;
+				seriesByChart[seriesKey] = seriesByChart[seriesKey] || [];
+				seriesByChart[seriesKey].push (ser);
 			});
 
 			const templateChartName = "c:" + CHART_TYPES.find ((chartType) => me.chartTemplate ["c:chartSpace"]["c:chart"]["c:plotArea"][`c:${chartType}Chart`]) + "Chart";
@@ -618,24 +643,33 @@ var Chart = Backbone.Model.extend ({
 			// remove template barChart from the XML object;
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"][templateChartName] = [];
 
-			_.each (ser, function (ser, chart) {
-				if (chart == "column") {
-					chart = "bar";
+			_.each (seriesByChart, function (ser, chart) {
+
+				var [chart, grouping] = chart.split ("\r\r");
+
+				const chartTagName = CHART_TAG_BY_CHART_NAME[chart];
+
+				if (!chartTagName) {
+					return cb (new VError (new Error (`Chart type '${chart}' is not supported`), "writeChart"));
 				}
-				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"] || [];
+
+				o ["c:chartSpace"]["c:chart"]["c:plotArea"][chartTagName] = o ["c:chartSpace"]["c:chart"]["c:plotArea"][chartTagName] || [];
 				// minimal chart config
 				let newChart = {};
 
-				if (chart == "bar") {
+				if (chart == "column" || chart == "bar") {
 					// clone barChart from template
 					newChart = _.clone (me.chartTemplate ["c:chartSpace"]["c:chart"]["c:plotArea"][templateChartName]);
+					newChart["c:barDir"] = {
+						$: {
+							val: chart.substr (0, 3),
+						},
+					};
 					
 				} else if (chart == "line" || chart == "area" || chart == "radar" || chart == "scatter") {
 					newChart = _.clone (me.chartTemplate ["c:chartSpace"]["c:chart"]["c:plotArea"][templateChartName]);
 					delete newChart["c:barDir"];
-					delete newChart["c:grouping"];
 				} else {
-					// set series data
 					newChart["c:varyColors"] = {
 						$: {
 							val: 1,
@@ -696,12 +730,26 @@ var Chart = Backbone.Model.extend ({
 					// 		},
 					// 	};
 					// }
-					// newChart["c:grouping"] = { $: { val: 'standard' } };
-
 				};
 
 				newChart["c:ser"] = ser;
-				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"].push (newChart);
+
+				if (grouping != "undefined") {
+					newChart["c:grouping"] = {
+						$: {
+							val: grouping || CHART_GROUPING_BY_CHART_NAME[chart],
+						},
+					};
+					if (grouping == "stacked") {
+						newChart["c:overlap"] = {
+							$: {
+								val: 100, // usually stacked expected to be seen with overlap 100%
+							},
+						};
+					}
+				}
+
+				o ["c:chartSpace"]["c:chart"]["c:plotArea"][chartTagName].push (newChart);
 
 				if (chartOpts.legendPos === undefined || chartOpts.legendPos) {
 					o ["c:chartSpace"]["c:chart"]["c:legend"] = {
