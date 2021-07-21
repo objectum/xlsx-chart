@@ -213,54 +213,65 @@ var Chart = Backbone.Model.extend ({
 	/*
 		Remove unused charts
 	*/
-	removeUnusedCharts: function (o) {
+	removeUnusedCharts: function (o, chart) {
 		var me = this;
-		if (me.tplName != "charts") {
-			return;
-		};
+
+		// axis ids that are used in chart layers
 		var axId = [];
 		function addId (o) {
 			_.each (o ["c:axId"], function (o) {
 				axId.push (o.$.val);
 			});
 		};
-		_.each (["line", "radar", "area", "scatter", "pie"], function (chart) {
-			if (!me.chartTypes [chart]) {
+
+		const chartTypes = getChartTypes (chart);
+
+		// remove chart layers that are not used in chart
+		_.each (["line", "radar", "area", "scatter", "pie", "doughnut"], function (chart) {
+			if (!chartTypes [chart]) {
 				delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"];
 			} else {
 				addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]);
 			};
 		});
-		if (!me.chartTypes ["column"] && !me.chartTypes ["bar"]) {
+
+		if (!chartTypes ["column"] && !chartTypes ["bar"]) {
 			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
-		} else
-		if (me.chartTypes ["column"] && !me.chartTypes ["bar"]) {
-			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0];
-			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
-		} else
-		if (!me.chartTypes ["column"] && me.chartTypes ["bar"]) {
-			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1];
-			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
 		} else {
-			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]);
-			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1]);
-		};
+			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
+		}
 
-		var catAx = [];
-		_.each (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"], function (o) {
-			if (axId.indexOf (o ["c:axId"].$.val) > -1) {
-				catAx.push (o);
-			};
-		});
-		o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"] = catAx;
+		if (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"]) {
+			var catAx = [];
+			// if category axes is single - it's an object, otherwise it's an array of objects
+			if (!o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"].length) {
+				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"] = [o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"]];
+			}
 
-		var valAx = [];
-		_.each (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"], function (o) {
-			if (axId.indexOf (o ["c:axId"].$.val) > -1) {
-				valAx.push (o);
-			};
-		});
-		o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"] = valAx;
+			// leave only category axes that are used in chart
+			_.each (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"], function (o) {
+				if (axId.indexOf (o ["c:axId"].$.val) > -1) {
+					catAx.push (o);
+				};
+			});
+			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"] = catAx;
+		}
+
+		if (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"]) {
+			var valAx = [];
+			// if value axes is single - it's an object, otherwise it's an array of objects
+			if (!o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"].length) {
+				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"] = [o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"]];
+			}
+
+			// leave only value axes that are used in chart
+			_.each (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"], function (o) {
+				if (axId.indexOf (o ["c:axId"].$.val) > -1) {
+					valAx.push (o);
+				};
+			});
+			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:valAx"] = valAx;
+		}
 	},
 	/*
 		Write chart
@@ -595,29 +606,16 @@ var Chart = Backbone.Model.extend ({
 				ser[chart] = ser[chart] || [];
 				ser[chart].push (r);
 			});
+
 			_.each (ser, function (ser, chart) {
-				if (chart == "column") {
-					if (me.tplName == "charts") {
-						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0]["c:ser"] = ser;
-					} else {
-						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
-					};
-				} else if (chart == "bar") {
-					if (me.tplName == "charts") {
-						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1]["c:ser"] = ser;
-					} else {
-						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
-					};
-				} else if (chart == "line") {
-					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"] || o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
-					delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
-					delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:barDir"];
-					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:grouping"] = {$: {val: "standard"}};
-					if (me.tplName == "charts") {
-						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"][1]["c:ser"] = ser;
-					} else {
-						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:ser"] = ser;
-					};
+				if (chart == "column" || chart == "bar") {
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
+				} else if (chart == "line" || chart == "area") {
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"] = _.clone (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"] || o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
+
+					delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:barDir"];
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:grouping"] = {$: {val: "standard"}};
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:ser"] = ser;
 				} else {
 					if (!o ["c:chartSpace"]["c:chart"]["c:plotArea"][`c:${chart}Chart`]) {
 						// minimal chart config
@@ -745,7 +743,7 @@ var Chart = Backbone.Model.extend ({
 					};
 				}
 			});
-			me.removeUnusedCharts (o);
+			me.removeUnusedCharts (o, chartOpts);
 
 			if (me.chartTitle) {
 				me.writeTitle (o, me.chartTitle, chartOpts);
@@ -824,12 +822,20 @@ var Chart = Backbone.Model.extend ({
 	*/
 	setTemplateName: function (opts) {
 		var me = this;
-		var chartTypes = {};
-		_.each (me.data, function (o) {
-			chartTypes [o.chart || me.chart] = true;
+		var chartTypes = {
+			...getChartTypes (me),
+		};
+
+		_.each (opts.charts, function (chart) {
+			chartTypes = {
+				...chartTypes,
+				...getChartTypes (chart),
+			};
 		});
-		me.charts = [opts];
+		me.charts = opts.charts || [opts];
+
 		me.chartTypes = chartTypes;
+
 		if (chartTypes ["radar"]) {
 			me.tplName = "radar";
 			return;
@@ -901,6 +907,8 @@ var Chart = Backbone.Model.extend ({
 
 		opts.type = opts.type || "nodebuffer";
 		_.extend (me, opts);
+
+		me.setTemplateName (opts);
 		
 		async.series ([
 			function (cb) {
@@ -1108,3 +1116,21 @@ var Chart = Backbone.Model.extend ({
 	}
 });
 module.exports = Chart;
+
+/**
+ *
+ * @param {Object} chart
+ * @returns {Object.<string,Boolean>}
+ */
+const getChartTypes = (chart) => {
+	const chartTypes = {};
+	if (chart.chart) {
+		chartTypes[chart.chart] = true;
+	}
+	_.each (chart.data, function (series) {
+		if (series.chart) {
+			chartTypes[series.chart] = true;
+		}
+	});
+	return chartTypes;
+}
