@@ -698,11 +698,47 @@ var Chart = Backbone.Model.extend ({
 				} else if (chartOpts.legendPos === null) {
 					delete o ["c:chartSpace"]["c:chart"]["c:legend"];
 				}
+
+				if (chartOpts.manualLayout && chartOpts.manualLayout.plotArea) {
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:layout"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:layout"] || {};
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:layout"]["c:manualLayout"] = {
+						"c:xMode": {
+							$: {
+								val: 'edge',
+							},
+						},
+						"c:yMode": {
+							$: {
+								val: 'edge',
+							},
+						},
+						"c:x": {
+							$: {
+								val: chartOpts.manualLayout.plotArea.x,
+							},
+						},
+						"c:y": {
+							$: {
+								val: chartOpts.manualLayout.plotArea.y,
+							},
+						},
+						"c:w": {
+							$: {
+								val: chartOpts.manualLayout.plotArea.w,
+							},
+						},
+						"c:h": {
+							$: {
+								val: chartOpts.manualLayout.plotArea.h,
+							},
+						},
+					};
+				}
 			});
 			me.removeUnusedCharts (o);
-			
+
 			if (me.chartTitle) {
-				me.writeTitle (o, me.chartTitle);
+				me.writeTitle (o, me.chartTitle, chartOpts);
 			};
 			me.write ({file: `xl/charts/chart${chartN}.xml`, object: o});
 			cb ();
@@ -711,9 +747,36 @@ var Chart = Backbone.Model.extend ({
 	/*
 		Chart title
 	*/
-	writeTitle: function (chart, title) {
+	writeTitle: function (o, title, chartOpts = {}) {
 		var me = this;
-		chart ["c:chartSpace"]["c:chart"]["c:title"] = {
+		const layout = {};
+
+		if (chartOpts.manualLayout && chartOpts.manualLayout.title) {
+			layout["c:manualLayout"] = {
+				"c:xMode": {
+					$: {
+						val: 'edge',
+					},
+				},
+				"c:yMode": {
+					$: {
+						val: 'edge',
+					},
+				},
+				"c:x": {
+					$: {
+						val: chartOpts.manualLayout.title.x,
+					},
+				},
+				"c:y": {
+					$: {
+						val: chartOpts.manualLayout.title.y,
+					},
+				},
+			};
+		}
+
+		o ["c:chartSpace"]["c:chart"]["c:title"] = {
 			"c:tx": {
 				"c:rich": {
 					"a:bodyPr": {},
@@ -733,14 +796,14 @@ var Chart = Backbone.Model.extend ({
 					}
 				}
 			},
-			"c:layout": {},
+			"c:layout": layout,
 			"c:overlay": {
 				$: {
 					val: "0"
 				}
 			}
 		};
-		chart ["c:chartSpace"]["c:chart"]["c:autoTitleDeleted"] = {
+		o ["c:chartSpace"]["c:chart"]["c:autoTitleDeleted"] = {
 			$: {
 				val: "0"
 			}
