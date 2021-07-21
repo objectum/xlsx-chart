@@ -225,20 +225,20 @@ var Chart = Backbone.Model.extend ({
 			});
 		};
 		_.each (["line", "radar", "area", "scatter", "pie"], function (chart) {
-			if (!me.charts [chart]) {
+			if (!me.chartTypes [chart]) {
 				delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"];
 			} else {
 				addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]);
 			};
 		});
-		if (!me.charts ["column"] && !me.charts ["bar"]) {
+		if (!me.chartTypes ["column"] && !me.chartTypes ["bar"]) {
 			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
 		} else
-		if (me.charts ["column"] && !me.charts ["bar"]) {
+		if (me.chartTypes ["column"] && !me.chartTypes ["bar"]) {
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][0];
 			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
 		} else
-		if (!me.charts ["column"] && me.charts ["bar"]) {
+		if (!me.chartTypes ["column"] && me.chartTypes ["bar"]) {
 			o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1];
 			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
 		} else {
@@ -400,8 +400,111 @@ var Chart = Backbone.Model.extend ({
 				return cb (new VError (err, "writeChart"));
 			}
 			var ser = {};
+			const chartOpts = me.charts [chartN - 1];
 			_.each (me.titles, function (t, i) {
 				var chart = me.data [t].chart || me.chart;
+				var customColorsPoints = {
+					"c:dPt": [],
+				};
+				var customColorsSeries = {};
+
+				if (chartOpts.customColors) {
+					const customColors = chartOpts.customColors;
+
+					if (customColors.points) {
+						customColorsPoints ["c:dPt"] = chartOpts.fields.map(function(field, i) {
+							const color = _.chain(customColors).get('points').get(t).get(field, null).value();
+
+							if (!color) {
+								return null;
+							}
+							if (color === 'noFill') {
+								return {
+									"c:idx": {
+										$: {
+											val: i,
+										},
+									},
+									"c:spPr": {
+										'a:noFill': ''
+									}
+								}
+							}
+							let fillColor = color;
+							let lineColor = color;
+							if (typeof color === 'object') {
+								fillColor = color.fill;
+								lineColor = color.line;
+							}
+							return {
+								"c:idx": {
+									$: {
+										val: i,
+									},
+								},
+								"c:spPr": {
+									"a:solidFill": {
+										"a:srgbClr": {
+											$: {
+												val: fillColor,
+											},
+										},
+									},
+									"a:ln": {
+										"a:solidFill": {
+											"a:srgbClr": {
+												$: {
+													val: lineColor,
+												},
+											},
+										},
+									},
+								},
+							}
+						}).filter(Boolean);
+					}
+
+					if (customColors.series && customColors.series[t]) {
+						let fillColor = customColors.series[t];
+						let lineColor = customColors.series[t];
+						let markerColor = customColors.series[t];
+						if (typeof customColors.series === 'object') {
+							fillColor = customColors.series[t].fill;
+							lineColor = customColors.series[t].line;
+							markerColor = customColors.series[t].marker;
+						}
+						customColorsSeries ["c:spPr"] = {
+							"a:solidFill": {
+								"a:srgbClr": {
+									$: {
+										val: fillColor,
+									},
+								},
+							},
+							"a:ln": {
+								"a:solidFill": {
+									"a:srgbClr": {
+										$: {
+											val: lineColor,
+										},
+									},
+								},
+							},
+							"c:marker": {
+								"c:spPr": {
+									"a:solidFill": {
+										"a:srgbClr": {
+											$: {
+												val: markerColor,
+											},
+										},
+									},
+								},
+							},
+						};
+					}
+				}
+
 				var r = {
 					"c:idx": {
 						$: {
@@ -431,6 +534,8 @@ var Chart = Backbone.Model.extend ({
 							}
 						}
 					},
+					...customColorsPoints,
+					...customColorsSeries,
 					"c:cat": {
 						"c:strRef": {
 							"c:f": "Table!$A$" + (row + 1) + ":$A$" + (me.fields.length + row),
@@ -497,16 +602,102 @@ var Chart = Backbone.Model.extend ({
 					} else {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
 					};
-				} else
-				if (chart == "bar") {
+				} else if (chart == "bar") {
 					if (me.tplName == "charts") {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"][1]["c:ser"] = ser;
 					} else {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
 					};
 				} else {
+					if (!o ["c:chartSpace"]["c:chart"]["c:plotArea"][`c:${chart}Chart`]) {
+						// minimal chart config
+						o ["c:chartSpace"]["c:chart"] = {
+							"c:autoTitleDeleted": {
+								$: {
+									val: 0,
+								},
+							},
+							"c:plotArea": {
+								[`c:${chart}Chart`]: {
+									"c:varyColors": {
+										$: {
+											val: 1,
+										},
+									},
+								},
+							},
+						};
+					}
+					// set series data
 					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:ser"] = ser;
+					if (chartOpts.firstSliceAng) {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:firstSliceAng"] = {
+							$: {
+								val: chartOpts.firstSliceAng,
+							},
+						};
+					}
+					if (chartOpts.holeSize) {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:holeSize"] = {
+							$: {
+								val: chartOpts.holeSize,
+							},
+						};
+					}
+					// if (chartOpts.showLabels) {
+					// 	o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:dLbls"] = {
+					// 		"c:showLegendKey": {
+					// 			$: {
+					// 				val: 1,
+					// 			},
+					// 		},
+					// 		"c:showVal": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showCatName": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showSerName": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showPercent": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showBubbleSize": {
+					// 			$: {
+					// 				val: 0,
+					// 			},
+					// 		},
+					// 		"c:showLeaderLines": {
+					// 			$: {
+					// 				val: 1,
+					// 			},
+					// 		},
+					// 	};
+					// }
+					// o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:grouping"] = { $: { val: 'standard' } };
+					
 				};
+
+				if (chartOpts.legendPos === undefined || chartOpts.legendPos) {
+					o ["c:chartSpace"]["c:chart"]["c:legend"] = {
+						"c:legendPos": {
+							$: {
+								val: chartOpts.legendPos || 'r',
+							},
+						},
+					};
+				} else if (chartOpts.legendPos === null) {
+					delete o ["c:chartSpace"]["c:chart"]["c:legend"];
+				}
 			});
 			me.removeUnusedCharts (o);
 			
@@ -558,27 +749,28 @@ var Chart = Backbone.Model.extend ({
 	/*
 		Set template name
 	*/
-	setTemplateName: function () {
+	setTemplateName: function (opts) {
 		var me = this;
-		var charts = {};
+		var chartTypes = {};
 		_.each (me.data, function (o) {
-			charts [o.chart || me.chart] = true;
+			chartTypes [o.chart || me.chart] = true;
 		});
-		me.charts = charts;
-		if (charts ["radar"]) {
+		me.charts = [opts];
+		me.chartTypes = chartTypes;
+		if (chartTypes ["radar"]) {
 			me.tplName = "radar";
 			return;
 		};
-		if (charts ["scatter"]) {
+		if (chartTypes ["scatter"]) {
 			me.tplName = "scatter";
 			return;
 		};
-		if (charts ["pie"]) {
+		if (chartTypes ["pie"]) {
 			me.tplName = "pie";
 			return;
 		};
-		if (_.keys (charts).length == 1) {
-			me.tplName = _.keys (charts) [0];
+		if (_.keys (chartTypes).length == 1) {
+			me.tplName = _.keys (chartTypes) [0];
 			return;
 		};
 		me.tplName = "charts";
@@ -597,7 +789,7 @@ var Chart = Backbone.Model.extend ({
 		async.series ([
 			function (cb) {
 				me.zip = new JSZip ();
-				me.setTemplateName ();
+				me.setTemplateName (opts);
 				let path = me.templatePath ? me.templatePath : (__dirname + "/../template/" + me.tplName + ".xlsx");
 				fs.readFile(path, function (err, data) {
 					if (err) {
