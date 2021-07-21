@@ -908,7 +908,7 @@ var Chart = Backbone.Model.extend ({
 			me.tplName = _.keys (chartTypes)[0];
 			return;
 		};
-		me.tplName = "charts";
+		me.tplName = "bar";
 	},
 	/*
 		Generate XLSX with chart
