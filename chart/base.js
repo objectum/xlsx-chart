@@ -5,6 +5,9 @@ var xml2js = require ("xml2js");
 var VError = require ("verror");
 var fs = require ("fs");
 var async = require ("async");
+
+const CHART_TYPES = ["bar", "column", "line", "radar", "area", "scatter", "pie", "doughnut"];
+
 var Chart = Backbone.Model.extend ({
 	/*
 		Read XML file from xlsx as object
@@ -213,33 +216,36 @@ var Chart = Backbone.Model.extend ({
 	/*
 		Remove unused charts
 	*/
-	removeUnusedCharts: function (o, chart) {
+	removeUnusedCharts: function (o) {
 		var me = this;
 
 		// axis ids that are used in chart layers
 		var axId = [];
 		function addId (o) {
+			if (!o ["c:axId"]) {
+				return;
+			}
 			_.each (o ["c:axId"], function (o) {
 				axId.push (o.$.val);
 			});
 		};
 
-		const chartTypes = getChartTypes (chart);
-
 		// remove chart layers that are not used in chart
-		_.each (["line", "radar", "area", "scatter", "pie", "doughnut"], function (chart) {
-			if (!chartTypes [chart]) {
-				delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"];
+		_.each (CHART_TYPES, function (chart) {
+			if (chart == "column") {
+				chart = "bar";
+			}
+
+			if (!o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]) {
+				return;
+			}
+
+			if (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"].length) {
+				_.each (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"], addId);
 			} else {
 				addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]);
-			};
+			}
 		});
-
-		if (!chartTypes ["column"] && !chartTypes ["bar"]) {
-			delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
-		} else {
-			addId (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
-		}
 
 		if (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:catAx"]) {
 			var catAx = [];
@@ -607,53 +613,52 @@ var Chart = Backbone.Model.extend ({
 				ser[chart].push (r);
 			});
 
-			_.each (ser, function (ser, chart) {
-				if (chart == "column" || chart == "bar") {
-					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
-				} else if (chart == "line" || chart == "area") {
-					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"] = _.clone (o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"] || o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]);
+			const templateChartName = "c:" + CHART_TYPES.find ((chartType) => me.chartTemplate ["c:chartSpace"]["c:chart"]["c:plotArea"][`c:${chartType}Chart`]) + "Chart";
 
-					delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:barDir"];
-					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:grouping"] = {$: {val: "standard"}};
-					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:ser"] = ser;
+			// remove template barChart from the XML object;
+			o ["c:chartSpace"]["c:chart"]["c:plotArea"][templateChartName] = [];
+
+			_.each (ser, function (ser, chart) {
+				if (chart == "column") {
+					chart = "bar";
+				}
+				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"] || [];
+				// minimal chart config
+				let newChart = {};
+
+				if (chart == "bar") {
+					// clone barChart from template
+					newChart = _.clone (me.chartTemplate ["c:chartSpace"]["c:chart"]["c:plotArea"][templateChartName]);
+					
+				} else if (chart == "line" || chart == "area" || chart == "radar" || chart == "scatter") {
+					newChart = _.clone (me.chartTemplate ["c:chartSpace"]["c:chart"]["c:plotArea"][templateChartName]);
+					delete newChart["c:barDir"];
+					delete newChart["c:grouping"];
 				} else {
-					if (!o ["c:chartSpace"]["c:chart"]["c:plotArea"][`c:${chart}Chart`]) {
-						// minimal chart config
-						o ["c:chartSpace"]["c:chart"] = {
-							"c:autoTitleDeleted": {
-								$: {
-									val: 0,
-								},
-							},
-							"c:plotArea": {
-								[`c:${chart}Chart`]: {
-									"c:varyColors": {
-										$: {
-											val: 1,
-										},
-									},
-								},
-							},
-						};
-					}
 					// set series data
-					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:ser"] = ser;
+					newChart["c:varyColors"] = {
+						$: {
+							val: 1,
+						},
+					};
+					
+					newChart["c:ser"] = ser;
 					if (chartOpts.firstSliceAng) {
-						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:firstSliceAng"] = {
+						newChart["c:firstSliceAng"] = {
 							$: {
 								val: chartOpts.firstSliceAng,
 							},
 						};
 					}
 					if (chartOpts.holeSize) {
-						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:holeSize"] = {
+						newChart["c:holeSize"] = {
 							$: {
 								val: chartOpts.holeSize,
 							},
 						};
 					}
 					// if (chartOpts.showLabels) {
-					// 	o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:dLbls"] = {
+					// 	newChart["c:dLbls"] = {
 					// 		"c:showLegendKey": {
 					// 			$: {
 					// 				val: 1,
@@ -691,9 +696,12 @@ var Chart = Backbone.Model.extend ({
 					// 		},
 					// 	};
 					// }
-					// o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"]["c:grouping"] = { $: { val: 'standard' } };
+					// newChart["c:grouping"] = { $: { val: 'standard' } };
 
 				};
+
+				newChart["c:ser"] = ser;
+				o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:" + chart + "Chart"].push (newChart);
 
 				if (chartOpts.legendPos === undefined || chartOpts.legendPos) {
 					o ["c:chartSpace"]["c:chart"]["c:legend"] = {
@@ -743,7 +751,7 @@ var Chart = Backbone.Model.extend ({
 					};
 				}
 			});
-			me.removeUnusedCharts (o, chartOpts);
+			me.removeUnusedCharts (o);
 
 			if (me.chartTitle) {
 				me.writeTitle (o, me.chartTitle, chartOpts);
@@ -880,6 +888,16 @@ var Chart = Backbone.Model.extend ({
 				});
 			},
 			function (cb) {
+				// save template chart so it could be easily removed before adding charts according to config
+				me.read ({file: "xl/charts/chart1.xml"}, function (err, o) {
+					if (err) {
+						return cb (new VError (err, "writeChart"));
+					}
+					me.chartTemplate = o;
+					cb ();
+				});
+			},
+			function (cb) {
 				me.writeStrings (cb);
 			},
 			function (cb) {
@@ -976,6 +994,16 @@ var Chart = Backbone.Model.extend ({
 					);
 
 					async.series ([
+						function (cb) {
+							// save template chart so it could be easily removed before adding charts according to config
+							me.read ({file: "xl/charts/chart1.xml"}, function (err, o) {
+								if (err) {
+									return cb (new VError (err, "writeChart"));
+								}
+								me.chartTemplate = o;
+								cb ();
+							});
+						},
 						function (cb) {
 							me.writeChart (++n, row, cb);
 						},
