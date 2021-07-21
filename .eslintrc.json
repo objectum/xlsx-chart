@@ -1,0 +1,18 @@
+{
+    "env": {
+        "commonjs": true,
+        "es2020": true,
+        "node": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 12
+    },
+    "rules": {
+        "space-before-function-paren": ["warn", "always"],
+        "space-before-blocks": ["warn", "always"],
+        "func-call-spacing": ["warn", "always"],
+        "object-curly-spacing": ["warn", "never"],
+        "quotes": ["warn", "double"],
+        "indent": ["warn", "tab"]
+    }
+}
