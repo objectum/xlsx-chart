@@ -608,6 +608,16 @@ var Chart = Backbone.Model.extend ({
 					} else {
 						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"]["c:ser"] = ser;
 					};
+				} else if (chart == "line") {
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"] = o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"] || o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
+					delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:barChart"];
+					delete o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:barDir"];
+					o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:grouping"] = { $: { val: 'standard' } };
+					if (me.tplName == "charts") {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"][1]["c:ser"] = ser;
+					} else {
+						o ["c:chartSpace"]["c:chart"]["c:plotArea"]["c:lineChart"]["c:ser"] = ser;
+					};
 				} else {
 					if (!o ["c:chartSpace"]["c:chart"]["c:plotArea"][`c:${chart}Chart`]) {
 						// minimal chart config
