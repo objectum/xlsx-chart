@@ -30,6 +30,22 @@ const CHART_GROUPING_BY_CHART_NAME = {
 
 const CHART_TYPES = ["bar", "column", "line", "radar", "area", "scatter", "pie", "doughnut"];
 
+/**
+ * 
+ * @param {number | null | undefined} value 
+ * @param {{ deleteEmptyCells?: boolean }} opts 
+ * @returns 
+ */
+function normalizeValue (value, opts) {
+	if (!opts.deleteEmptyCells) {
+		return value || 0;
+	}
+	if (value || value === 0) {
+		return value;
+	}
+	return "";
+}
+
 var Chart = Backbone.Model.extend ({
 	/*
 		Read XML file from xlsx as object
@@ -952,7 +968,8 @@ var Chart = Backbone.Model.extend ({
 				_.each (me.titles, function (t) {
 					me.data[t] = me.data[t] || {};
 					_.each (me.fields, function (f) {
-						me.data[t][f] = me.data[t][f] || (me.deleteEmptyCells ? "" : 0); //deleteEmptyCells - don't display missing values as 0
+						const value = normalizeValue (me.data[t][f], me);
+						me.data[t][f] = value;
 					});
 				});
 				me.writeTable (cb);
@@ -1008,11 +1025,14 @@ var Chart = Backbone.Model.extend ({
 				async.eachSeries (me.charts, (chart, cb) => {
 					["chart", "titles", "fields", "data", "chartTitle"].forEach (a => me[a] = chart[a]);
 
+					const deleteEmptyCells = me.deleteEmptyCells || chart.deleteEmptyCells;
+
 					_.each (me.titles, function (t) {
 						me.data[t] = me.data[t] || {};
 
 						_.each (me.fields, function (f) {
-							me.data[t][f] = me.data[t][f] || 0;
+							const value = normalizeValue (me.data[t][f], {deleteEmptyCells});
+							me.data[t][f] = value;
 						});
 					});
 					me.writeMultTable (row, () => {
