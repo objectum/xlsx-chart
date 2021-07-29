@@ -198,6 +198,91 @@ xlsxChart.generate (opts, function (err, data) {
 });
 ```
 
+## Available chart options
+```js
+var opts = {
+	file: "chart.xlsx", // exported file
+	type: "nodebuffer", // optional: used by JSZip library
+	charts: [
+		{
+			chart: "column", // pie, doughnut, line, area, bar
+			grouping: "clustered", // optional: stacked, standard - allow to create stacked bar or line chart
+			titles: [
+				"title1", // list of chart titles
+				"title2", // list of chart titles
+			],
+			fields: [
+				"field1", // list of chart fields
+				"field2",
+			],
+			data: {
+				// chart: "column", // could be used to create multi-layer charts with e.g. column + bar + line + area chart in the same object
+				// grouping: "clustered", // same as common grouping option, but only for current layer;
+				"title1": {
+					"field1": 123, // structured data
+					"field2": 321,
+				},
+				"title2": {
+					"field1": 456,
+					"field2": 654,
+				},
+			},
+			chartTitle: "Title",
+			position: { // optional: chart position
+				fromColumn: 0, 			// chart top left x coordinate in columns
+				fromColumnOffset: 0, 	// chart top left x coordinate in pixels
+				fromRow: n * 20, 		// chart top left y coordinate in columns
+				fromRowOffset: 0, 		// chart top left y coordinate in pixels
+				toColumn: 10, 			// chart bottom right x coordinate in columns
+				toColumnOffset: 0, 		// chart bottom right x coordinate in pixels
+				toRow: (n + 1) * 20, 	// chart bottom right y coordinate in columns
+				toRowOffset: 0, 		// chart bottom right y coordinate in pixels
+			},
+			customColors: { // optional: chart colors
+				points: {
+					"title1": {
+						"field1": "FF0000", // colors in the same structure as data; not all points required
+						"field1": {
+							fill: "FF0000", // separate colors for fill and border could be set
+							line: "FF0000",
+						},
+					},
+				},
+				series: {
+					"title1": "FF0000", // whole series color could be also set
+					"title2": {
+						fill: "FF0000", // separate colors for fill and border could be set
+						line: "FF0000",
+						markerColor: "FF0000", // different marker color also could be set for line chart
+					},
+				},
+			},
+			manualLayout: { // optional blocks position on the chart canvas
+				plotArea: { // chart position
+					x: 0.5, // x and y of top left corner in proportion value 0..1
+					y: 0.5,
+					w: 0.5, // width and height of block point in proportion value 0..1
+					h: 0.5,
+				},
+				title: {
+					x: 0.5, // x and y of top left corner in proportion value 0..1
+					y: 0.5,
+				},
+			},
+			firstSliceAng: 270, // optional: first slice angle for pie and doughnut chart in degrees
+			holeSize: 50, // optional: hole size of doughnut chart in percent
+			legendPos: "r", // optional: 'l', 't', 'r', 'b', null - legend position; null to hide; right is default
+			deleteEmptyCells: false, // optional: allow to will empty values with 0 or leave as gaps
+		},
+	],
+};
+
+xlsxChart.writeFile (opts, function (err) {
+  console.log ("File: ", opts.file);
+});
+
+```
+
 ## Examples
 
 <a href="examples/column.js">column.js</a>  
