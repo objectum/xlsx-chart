@@ -49,7 +49,7 @@ var Chart = Backbone.Model.extend ({
 		if (!me.str.hasOwnProperty (s)) {
 			throw new VError ("getStr: Unknown string: " + s);
 		}
-		return me.str [s];
+		return isNaN(s) ? me.str[s] : s;
 	},
 	/*
 		Write table
@@ -86,7 +86,7 @@ var Chart = Backbone.Model.extend ({
 				var c = [{
 					$: {
 						r: "A" + (y + 2),
-						t: "s"
+						t: isNaN(f) ? "s" : null
 					},
 					v: me.getStr (f)
 				}];
